@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tema 1 — Laboratorio de imagen</title>
+<meta name="description" content="Simulaciones interactivas del Tema 1: ventanas en TC, profundidad de bit, SNR/CNR, volumen parcial y ecografía.">
+<link rel="stylesheet" href="../assets/estilo.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1><a href="../">Laboratorio de imagen</a> · Tema 1</h1>
+    <span class="sub">Introducción al procesado de imágenes médicas</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="wrap">
+    <a href="#ventana">1 · Ventanas en TC</a>
+    <a href="#bits">2 · Profundidad de bit</a>
+    <a href="#snr">3 · SNR y CNR</a>
+    <a href="#volumen">4 · Volumen parcial</a>
+    <a href="#eco">5 · Ecografía y Doppler</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ 1. VENTANAS ============ -->
+<section class="lab" id="ventana">
+  <h2>Ventanas en TC (<em>windowing</em>)</h2>
+  <p class="lead">Un TC de tórax sintético en unidades Hounsfield. El rango va de −1000 HU a más de +1000 HU, pero la pantalla solo tiene 256 grises: hay que elegir qué rango mirar.</p>
+  <div class="grid">
+    <div>
+      <canvas class="img" id="ct-canvas" aria-label="TC de tórax sintético"></canvas>
+      <div class="readout" id="ct-readout">Pasa el ratón por la imagen para leer el valor en HU.</div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="ct-wl">Centro de ventana (WL) <output for="ct-wl"></output></label>
+          <input type="range" id="ct-wl" min="-1000" max="1500" step="5" value="40"></div>
+        <div class="ctrl"><label for="ct-ww">Anchura de ventana (WW) <output for="ct-ww"></output></label>
+          <input type="range" id="ct-ww" min="1" max="4000" step="1" value="400"></div>
+        <div class="btns">
+          <button data-wl="-600" data-ww="1500">Pulmón</button>
+          <button data-wl="40" data-ww="400">Mediastino</button>
+          <button data-wl="400" data-ww="1800">Hueso</button>
+          <button data-wl="1000" data-ww="4000">Todo el rango</button>
+        </div>
+        <canvas class="plot" id="ct-hist" width="420" height="150" aria-label="Histograma de HU con la ventana"></canvas>
+        <p class="muted">Histograma de la imagen (escala logarítmica). La franja naranja es la ventana: lo que queda a la izquierda se ve negro, y lo que queda a la derecha, blanco.</p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> En la imagen hay escondidos un <b>nódulo pulmonar</b> y una <b>lesión en el mediastino</b> que solo tiene +20 HU de diferencia con el tejido de alrededor.
+        ¿Con qué ventana ves cada uno? ¿Por qué con «Todo el rango» no ves ninguno de los dos?
+        <div class="btns"><button id="ct-solucion">Mostrar solución</button></div>
+        <div id="ct-solucion-txt" hidden>
+          El nódulo (círculo amarillo) se ve en la ventana de pulmón. La lesión del mediastino solo se ve con una ventana estrecha (mediastino, WW ≈ 400): 20 HU ocupan 20/400 × 256 ≈ 13 grises. Con todo el rango (WW = 4000), los mismos 20 HU ocupan ≈ 1 gris y el ruido los tapa.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. BITS ============ -->
+<section class="lab" id="bits">
+  <h2>Profundidad de bit (resolución radiométrica)</h2>
+  <p class="lead">Con <i>k</i> bits por píxel hay 2<sup>k</sup> niveles. Aquí el mismo TC se guarda con <i>k</i> bits en el rango −1024…3071 HU y luego se muestra con una ventana.</p>
+  <div class="grid">
+    <div>
+      <canvas class="img" id="bits-canvas" aria-label="TC cuantizado"></canvas>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="bits-k">Bits por píxel, <i>k</i> <output for="bits-k"></output></label>
+          <input type="range" id="bits-k" min="1" max="12" step="1" value="12"></div>
+        <div class="radios" role="radiogroup">
+          <label><input type="radio" name="bits-ventana" value="todo"> Ver todo el rango</label>
+          <label><input type="radio" name="bits-ventana" value="medi" checked> Ventana mediastino (WL 40, WW 400)</label>
+        </div>
+        <table class="stats" style="margin-top:10px">
+          <tr><td>Niveles posibles, 2<sup>k</sup></td><td id="bits-niveles"></td></tr>
+          <tr><td>Salto entre niveles</td><td id="bits-salto"></td></tr>
+          <tr><td>Niveles dentro de la ventana</td><td id="bits-enventana"></td></tr>
+          <tr><td>Tamaño de un corte 512 × 512</td><td id="bits-tam"></td></tr>
+        </table>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> Con la ventana de mediastino, ve bajando bits. ¿A partir de cuántos bits desaparece la lesión de +20 HU de la pestaña 1? Relaciónalo con el «salto entre niveles».
+        <br><strong>Para pensar.</strong> Si el monitor solo enseña 8 bits, ¿por qué los TC se guardan con 12? Pista: la ventana elige <em>qué</em> 256 grises enseñar de entre los 4096.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. SNR / CNR ============ -->
+<section class="lab" id="snr">
+  <h2>SNR y CNR sobre un fantoma</h2>
+  <p class="lead">Un fantoma con un objeto circular sobre un fondo y ruido gaussiano. Haz clic para colocar las ROIs y mide como en un control de calidad real.</p>
+  <div class="grid">
+    <div>
+      <canvas class="img" id="snr-canvas" aria-label="Fantoma con ROIs"></canvas>
+      <div class="radios" style="margin-top:8px">
+        <span class="muted">Al hacer clic coloco la ROI del:</span>
+        <label><input type="radio" name="snr-roi" value="obj" checked> objeto <span style="color:#eb811b">■</span></label>
+        <label><input type="radio" name="snr-roi" value="fondo"> fondo <span style="color:#2f9fd8">■</span></label>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="snr-mo">Intensidad del objeto, μ<sub>obj</sub> <output for="snr-mo"></output></label>
+          <input type="range" id="snr-mo" min="0" max="1000" step="5" value="600"></div>
+        <div class="ctrl"><label for="snr-mf">Intensidad del fondo, μ<sub>fondo</sub> <output for="snr-mf"></output></label>
+          <input type="range" id="snr-mf" min="0" max="1000" step="5" value="200"></div>
+        <div class="ctrl"><label for="snr-s">Ruido, σ <output for="snr-s"></output></label>
+          <input type="range" id="snr-s" min="1" max="300" step="1" value="60"></div>
+        <label class="muted"><input type="checkbox" id="snr-filtro"> Aplicar filtro de media 3 × 3</label>
+        <table class="stats" style="margin-top:10px">
+          <tr><th>ROI</th><th>μ</th><th>σ</th></tr>
+          <tr><td>Objeto</td><td id="snr-muo"></td><td id="snr-so"></td></tr>
+          <tr><td>Fondo</td><td id="snr-muf"></td><td id="snr-sf"></td></tr>
+        </table>
+        <table class="stats" style="margin-top:10px">
+          <tr><td>SNR = μ<sub>obj</sub> / σ<sub>obj</sub></td><td id="snr-1"></td></tr>
+          <tr><td>SNR = (μ<sub>obj</sub> − μ<sub>fondo</sub>) / σ<sub>obj</sub></td><td id="snr-2"></td></tr>
+          <tr><td>SNR = μ<sub>obj</sub> / σ<sub>fondo</sub></td><td id="snr-3"></td></tr>
+          <tr><td>CNR = (μ<sub>obj</sub> − μ<sub>fondo</sub>) / σ<sub>fondo</sub></td><td id="snr-4"></td></tr>
+          <tr><td>CNR = |μ<sub>A</sub> − μ<sub>B</sub>| / √(σ<sub>A</sub>² + σ<sub>B</sub>²)</td><td id="snr-5"></td></tr>
+        </table>
+      </div>
+      <div class="reto">
+        <strong>Experimentos.</strong>
+        (1) Activa el filtro 3 × 3: ¿σ se divide más o menos entre 3? ¿Y qué le pasa al borde del círculo?
+        (2) Pon la ROI del objeto <em>a caballo</em> del borde: ¿qué le pasa a σ<sub>obj</sub>? Es el volumen parcial en acción.
+        (3) Iguala μ<sub>obj</sub> y μ<sub>fondo</sub>: la SNR sigue alta, pero la CNR se va a 0. ¿Qué te dice eso de para qué sirve cada una?
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Generador de problemas tipo examen</h3>
+    <p class="muted">Como en la Parte II del examen: datos de dos ROIs, cálculo a mano o con calculadora. Redondea a 1 decimal.</p>
+    <div id="ex-enunciado"></div>
+    <div class="btns" style="align-items:center">
+      <label>a) SNR = <input type="number" id="ex-r1" step="any"></label>
+      <label>b) CNR = <input type="number" id="ex-r2" step="any"></label>
+      <button class="primary" id="ex-comprobar">Comprobar</button>
+      <button id="ex-nuevo">Nuevo problema</button>
+    </div>
+    <div id="ex-resultado"></div>
+  </div>
+</section>
+
+<!-- ============ 4. VOLUMEN PARCIAL ============ -->
+<section class="lab" id="volumen">
+  <h2>Efecto de volumen parcial</h2>
+  <p class="lead">Vista lateral (eje <i>z</i> vertical) de un tejido con tres lesiones de 3, 6 y 15 mm. El escáner promedia todo lo que hay dentro de cada corte de grosor <i>e</i>.</p>
+  <div class="grid">
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="muted">Realidad</div><canvas class="img" id="vp-real" aria-label="Objeto real"></canvas></div>
+        <div><div class="muted">Lo que ve el escáner</div><canvas class="img" id="vp-scan" aria-label="Imagen promediada por cortes"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="vp-e">Grosor de corte, <i>e</i> <output for="vp-e"></output></label>
+          <input type="range" id="vp-e" min="1" max="30" step="0.5" value="10"></div>
+        <div class="ctrl"><label for="vp-off">Posición de los cortes <output for="vp-off"></output></label>
+          <input type="range" id="vp-off" min="0" max="1" step="0.01" value="0"></div>
+        <table class="stats">
+          <tr><th>Lesión</th><th>Contraste real</th><th>Contraste visto</th></tr>
+          <tbody id="vp-tabla"></tbody>
+        </table>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> ¿A partir de qué grosor de corte la lesión de 3 mm baja del 25 % de su contraste real? Mueve también la posición de los cortes: con el mismo grosor, ¿la lesión puede «aparecer» o «desaparecer» según caiga el corte?
+        (Es la Figura 7 del temario.)
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. ECOGRAFÍA ============ -->
+<section class="lab" id="eco">
+  <h2>Ecografía: impedancia y Doppler</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>¿Cuánto se refleja en una interfaz?</h3>
+      <p class="formula">Z = ρ·v<sub>s</sub> &nbsp;&nbsp; R = ((Z₂ − Z₁)/(Z₂ + Z₁))²</p>
+      <div class="btns" style="align-items:center">
+        <label>Medio 1 <select id="eco-m1"></select></label>
+        <label>Medio 2 <select id="eco-m2"></select></label>
+      </div>
+      <canvas class="plot" id="eco-barra" width="420" height="70" aria-label="Fracción reflejada y transmitida"></canvas>
+      <div id="eco-r" class="readout"></div>
+      <div class="reto"><strong>Para pensar.</strong> Compara piel–aire con piel–gel. ¿Por qué se ve tan mal lo que hay detrás de un hueso o del pulmón?</div>
+    </div>
+    <div class="card">
+      <h3>Escucha el Doppler</h3>
+      <p class="formula">Δf = 2 f₀ v cos θ / v<sub>s</sub></p>
+      <div class="ctrl"><label for="dop-f0">Frecuencia emitida f₀ <output for="dop-f0"></output></label>
+        <input type="range" id="dop-f0" min="2" max="10" step="0.5" value="5"></div>
+      <div class="ctrl"><label for="dop-v">Velocidad de la sangre v <output for="dop-v"></output></label>
+        <input type="range" id="dop-v" min="0" max="1.5" step="0.05" value="0.5"></div>
+      <div class="ctrl"><label for="dop-th">Ángulo haz–vaso θ <output for="dop-th"></output></label>
+        <input type="range" id="dop-th" min="0" max="90" step="1" value="60"></div>
+      <div class="readout" id="dop-df" style="font-size:1.1rem;color:var(--text)"></div>
+      <div class="btns"><button class="primary" id="dop-play">▶ Escuchar Δf</button></div>
+      <p class="muted">v<sub>s</sub> = 1540 m/s (velocidad del sonido en tejido, no la de la luz). El ecógrafo «suena» porque Δf cae en el rango audible.</p>
+      <div class="reto"><strong>Para pensar.</strong> Pon θ = 90°. ¿Por qué el ecografista nunca mide con el haz perpendicular al vaso?</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Teledetección y Procesado de Imágenes · Grado en Física, UNIR · Curso 2026-27.
+    Todas las imágenes son sintéticas, generadas en tu navegador; no son datos de pacientes.
+  </div>
+</footer>
+
+<script src="../assets/comun.js"></script>
+<script src="lab.js"></script>
+</body>
+</html>
