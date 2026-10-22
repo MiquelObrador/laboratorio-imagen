@@ -43,3 +43,18 @@ alumnos no mezcla archivos nuevos con otros viejos guardados en caché.
   datos de pacientes.
 - Este repo es público: no subir aquí exámenes, soluciones de actividades
   evaluables ni material del temario de UNIR.
+
+## Miniatura para redes (Open Graph)
+
+`assets/og.jpg` (1200×630) es la previsualización que muestran WhatsApp,
+Telegram, etc. Se genera renderizando `herramientas/og/tarjeta.html` (con
+imágenes sacadas de las propias simulaciones) a 1200×630, p.ej. con Edge o
+Chrome en modo headless:
+
+```bash
+msedge --headless=new --window-size=1200,630 --screenshot=og.png herramientas/og/tarjeta.html
+```
+
+y convirtiéndola a JPEG (< 300 KB, el límite práctico de WhatsApp). Ojo:
+WhatsApp guarda en caché la previsualización de cada URL; si se cambia la
+imagen, cambiar también su nombre (`og2.jpg`) y la etiqueta `og:image`.

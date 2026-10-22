@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background: radial-gradient(circle at 50% 35%, #2f4a50 0%, #23373b 45%, #151f22 100%);
+    color: #fff;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .etiqueta { margin-top: 44px; color: #eb811b; font-weight: 700; letter-spacing: .14em; font-size: 22px; }
+  h1 { margin: 6px 0 0; font-size: 68px; font-weight: 700; letter-spacing: -.01em; }
+  .sub { margin-top: 4px; font-size: 26px; color: #c9d4d7; }
+  .fila { display: flex; gap: 28px; margin-top: 34px; }
+  figure { margin: 0; text-align: center; }
+  figure img {
+    width: 240px; height: 240px; object-fit: cover; display: block;
+    border-radius: 14px; border: 2px solid rgba(255,255,255,.18);
+    box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    background: #000;
+  }
+  figure.centro img { border-color: #eb811b; }
+  figcaption { margin-top: 10px; font-size: 22px; color: #e6e8ea; font-weight: 600; }
+  .url { position: absolute; bottom: 18px; font-size: 18px; color: #8fa3a8; }
+</style>
+</head>
+<body>
+  <div class="etiqueta">TELEDETECCIÓN Y PROCESADO DE IMÁGENES</div>
+  <h1>Laboratorio de imagen</h1>
+  <div class="sub">Simulaciones interactivas en el navegador · Grado en Física</div>
+  <div class="fila">
+    <figure><img src="ct.png" alt=""><figcaption>TC · ventanas</figcaption></figure>
+    <figure class="centro"><img src="pet.png" alt=""><figcaption>PET · 511 keV</figcaption></figure>
+    <figure><img src="eco.png" alt=""><figcaption>Ecografía · pulso-eco</figcaption></figure>
+  </div>
+  <div class="url">miquelobrador.github.io/laboratorio-imagen</div>
+</body>
+</html>
