@@ -19,9 +19,11 @@
   <div class="wrap">
     <a href="#ventana">1 · Ventanas en TC</a>
     <a href="#bits">2 · Profundidad de bit</a>
-    <a href="#snr">3 · SNR y CNR</a>
-    <a href="#volumen">4 · Volumen parcial</a>
-    <a href="#eco">5 · Ecografía y Doppler</a>
+    <a href="#pet">3 · PET</a>
+    <a href="#pulsoeco">4 · Ecografía pulso-eco</a>
+    <a href="#eco">5 · Impedancia y Doppler</a>
+    <a href="#snr">6 · SNR y CNR</a>
+    <a href="#volumen">7 · Volumen parcial</a>
   </div>
 </nav>
 
@@ -94,7 +96,7 @@
   </div>
 </section>
 
-<!-- ============ 3. SNR / CNR ============ -->
+<!-- ============ 6. SNR / CNR ============ -->
 <section class="lab" id="snr">
   <h2>SNR y CNR sobre un fantoma</h2>
   <p class="lead">Un fantoma con un objeto circular sobre un fondo y ruido gaussiano. Haz clic para colocar las ROIs y mide como en un control de calidad real.</p>
@@ -152,7 +154,7 @@
   </div>
 </section>
 
-<!-- ============ 4. VOLUMEN PARCIAL ============ -->
+<!-- ============ 7. VOLUMEN PARCIAL ============ -->
 <section class="lab" id="volumen">
   <h2>Efecto de volumen parcial</h2>
   <p class="lead">Vista lateral (eje <i>z</i> vertical) de un tejido con tres lesiones de 3, 6 y 15 mm. El escáner promedia todo lo que hay dentro de cada corte de grosor <i>e</i>.</p>
@@ -182,7 +184,93 @@
   </div>
 </section>
 
-<!-- ============ 5. ECOGRAFÍA ============ -->
+<!-- ============ 3. PET (animación) ============ -->
+<section class="lab" id="pet">
+  <h2>PET: de las aniquilaciones a la imagen</h2>
+  <p class="lead">Cada positrón se aniquila con un electrón y salen <b>dos fotones de 511 keV en sentidos opuestos</b>. El escáner solo sabe qué dos detectores se han activado a la vez: el origen está en algún punto de la línea que los une (LOR). Con miles de líneas aparece la imagen.</p>
+  <div class="grid">
+    <div>
+      <canvas class="img" id="pet-escaner" aria-label="Anillo de detectores PET con eventos" style="image-rendering:auto"></canvas>
+      <div class="btns">
+        <button class="primary" id="pet-play">▶ Adquirir</button>
+        <button id="pet-mas">+50 000 eventos</button>
+        <button id="pet-reset">Reiniciar</button>
+      </div>
+      <div class="ctrl"><label for="pet-vel">Ritmo de adquisición <output for="pet-vel"></output></label>
+        <input type="range" id="pet-vel" min="0" max="6" step="1" value="1"></div>
+      <p class="muted">Rojo: punto de aniquilación. Azul: los dos fotones de 511 keV. Amarillo: líneas de respuesta (LOR) acumuladas.</p>
+    </div>
+    <div>
+      <div class="card">
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+          <div><div class="muted">Distribución real</div><canvas class="img" id="pet-real" aria-label="Distribución real del radiofármaco"></canvas></div>
+          <div><div class="muted">Sinograma</div><canvas class="img" id="pet-sino" aria-label="Sinograma"></canvas></div>
+          <div><div class="muted">Reconstrucción</div><canvas class="img" id="pet-rec" aria-label="Imagen reconstruida"></canvas></div>
+        </div>
+        <div class="radios" style="margin-top:10px">
+          <label><input type="radio" name="pet-rec" value="bp"> Retroproyección simple</label>
+          <label><input type="radio" name="pet-rec" value="fbp" checked> Retroproyección filtrada (FBP)</label>
+        </div>
+        <table class="stats" style="margin-top:10px">
+          <tr><td>Eventos detectados, <i>N</i></td><td id="pet-n">0</td></tr>
+          <tr><td>Ruido relativo en el hígado, σ/μ</td><td id="pet-ruido">—</td></tr>
+        </table>
+        <p class="muted">Sinograma: cada fila es un ángulo y cada columna, una distancia al centro. Cada punto del paciente dibuja una sinusoide (de ahí el nombre).</p>
+      </div>
+      <div class="reto">
+        <strong>Retos.</strong>
+        (1) ¿Con cuántos eventos empiezas a distinguir la <b>lesión pequeña</b> (arriba a la izquierda del corazón)?
+        (2) Anota σ/μ con 50 000 eventos y con 200 000 (4 veces más). ¿Se ha dividido entre 2? Es la ley de 1/√<i>N</i> de la diapositiva 4.1.3.
+        (3) Cambia a retroproyección simple: ¿por qué sale todo borroso? (Pista: Fourier, Tema 2.)
+      </div>
+      <p class="muted">Modelo simplificado: no incluye el recorrido del positrón, la atenuación ni las coincidencias aleatorias.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. PULSO-ECO (animación) ============ -->
+<section class="lab" id="pulsoeco">
+  <h2>Ecografía: pulso-eco, del modo A al modo B</h2>
+  <p class="lead">La sonda emite un pulso. Cada interfaz devuelve un eco y su retraso da la profundidad: <span class="formula">d = v<sub>s</sub>·t / 2</span>. Una línea da una señal 1D (modo A); muchas líneas en abanico forman la imagen (modo B).</p>
+  <div class="grid">
+    <div>
+      <div class="muted">Anatomía (lo que no ve el ecógrafo)</div>
+      <canvas class="img" id="pe-anatomia" aria-label="Corte anatómico con la línea del haz" style="image-rendering:auto"></canvas>
+      <div class="muted" id="pe-leyenda" style="margin-top:6px;font-size:.8rem"></div>
+      <div class="muted" style="margin-top:10px">Señal recibida en la línea (modo A): amplitud frente a tiempo y profundidad</div>
+      <canvas class="plot" id="pe-modoA" width="560" height="140" aria-label="Señal en modo A"></canvas>
+    </div>
+    <div>
+      <div class="card">
+        <div class="muted">Imagen en modo B</div>
+        <canvas class="img" id="pe-modoB" aria-label="Imagen ecográfica en modo B"></canvas>
+        <div class="btns">
+          <button class="primary" id="pe-disparar">▶ Disparar un pulso (modo A)</button>
+          <button class="primary" id="pe-barrer">▶ Barrido completo (modo B)</button>
+        </div>
+        <div class="readout" id="pe-camara"></div>
+        <div class="ctrl"><label for="pe-theta">Dirección de la línea (modo A) <output for="pe-theta"></output></label>
+          <input type="range" id="pe-theta" min="-32" max="32" step="1" value="3"></div>
+        <div class="ctrl"><label for="pe-lineas">Número de líneas (modo B) <output for="pe-lineas"></output></label>
+          <input type="range" id="pe-lineas" min="8" max="128" step="8" value="64"></div>
+        <div class="ctrl"><label for="pe-vel">Velocidad de la animación <output for="pe-vel"></output></label>
+          <input type="range" id="pe-vel" min="4" max="200" step="1" value="30"></div>
+        <label class="muted"><input type="checkbox" id="pe-tgc" checked> Compensación de ganancia con la profundidad (TGC)</label>
+        <p class="readout" id="pe-fps"></p>
+      </div>
+      <div class="card"><div class="readout" id="pe-info" style="color:var(--text)"></div></div>
+      <div class="reto">
+        <strong>Retos.</strong>
+        (1) Apunta la línea al <b>cálculo</b> (≈ +16°): ¿qué hay detrás en la imagen? Es la <b>sombra acústica</b>, que los ecografistas usan para reconocer piedras.
+        (2) Detrás del <b>quiste</b> la imagen se ve <i>más</i> brillante. ¿Por qué? (Pista: atenuación del líquido.)
+        (3) Desactiva la TGC: ¿qué pasa en profundidad?
+        (4) Baja a 16 líneas: ¿qué ganas y qué pierdes?
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. IMPEDANCIA Y DOPPLER ============ -->
 <section class="lab" id="eco">
   <h2>Ecografía: impedancia y Doppler</h2>
   <div class="grid">
@@ -225,5 +313,7 @@
 
 <script src="../assets/comun.js"></script>
 <script src="lab.js"></script>
+<script src="pet.js"></script>
+<script src="ecografia.js"></script>
 </body>
 </html>

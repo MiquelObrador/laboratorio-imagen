@@ -10,7 +10,9 @@ dependencias ni paso de compilación. Pensado para publicarse con GitHub Pages.
 index.html          portada con la lista de temas
 assets/estilo.css   estilos comunes (claro/oscuro, móvil)
 assets/comun.js     utilidades comunes (ruido con semilla, pestañas, sliders...)
-tema01/             Tema 1: ventanas TC, bits, SNR/CNR, volumen parcial, ecografía
+tema01/             Tema 1: ventanas TC, bits, PET (animación), pulso-eco (animación),
+                    impedancia/Doppler, SNR/CNR, volumen parcial
+                    (lab.js = pestañas estáticas; pet.js y ecografia.js = animaciones)
 ```
 
 Para añadir un tema: copiar `tema01/` como `temaXX/`, cambiar las pestañas y

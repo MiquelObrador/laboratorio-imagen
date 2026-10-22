@@ -420,5 +420,5 @@ nuevoProblema();
 dibujarVP();
 dibujarEco();
 dibujarDoppler();
-iniciarPestanas();
+// iniciarPestanas() se llama al final de ecografia.js, cuando ya están cargados todos los módulos.
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { dibujarTC(); dibujarEco(); });

@@ -38,6 +38,29 @@ function pintarGrises(canvas, valores, w, h) {
   return ctx;
 }
 
+// Mapa de color "hot" (negro → rojo → amarillo → blanco), típico de medicina nuclear.
+function colorHot(t) {
+  const c = v => Math.max(0, Math.min(255, Math.round(v * 255)));
+  return [c(3 * t), c(3 * t - 1), c(3 * t - 2)];
+}
+
+// Pinta una matriz de valores en [0,1] con un mapa de color [r,g,b] = mapa(t).
+function pintarColor(canvas, valores, w, h, mapa) {
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) {
+    const [r, g, b] = mapa(Math.max(0, Math.min(1, valores[i])));
+    img.data[4 * i] = r;
+    img.data[4 * i + 1] = g;
+    img.data[4 * i + 2] = b;
+    img.data[4 * i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return ctx;
+}
+
 // Coordenadas de píxel a partir de un evento de ratón/táctil sobre un canvas escalado por CSS.
 function pixelDeEvento(canvas, ev) {
   const r = canvas.getBoundingClientRect();
@@ -67,6 +90,8 @@ function iniciarPestanas(alCambiar) {
     document.querySelectorAll('section.lab').forEach(s => s.classList.toggle('active', s.id === id));
     enlaces.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
     if (alCambiar) alCambiar(id);
+    // Las animaciones escuchan este evento para pausarse cuando su pestaña no está visible.
+    window.dispatchEvent(new CustomEvent('pestana', { detail: id }));
   }
   window.addEventListener('hashchange', () => mostrar(location.hash.slice(1)));
   mostrar(location.hash.slice(1));
