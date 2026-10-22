@@ -276,5 +276,3 @@
   prepararA();
   prepararB(false);
 })();
-
-iniciarPestanas();

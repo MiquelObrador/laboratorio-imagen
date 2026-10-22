@@ -92,6 +92,8 @@ function iniciarPestanas(alCambiar) {
     if (alCambiar) alCambiar(id);
     // Las animaciones escuchan este evento para pausarse cuando su pestaña no está visible.
     window.dispatchEvent(new CustomEvent('pestana', { detail: id }));
+    // El navegador salta al ancla #id y la barra fija tapa el título: volvemos arriba.
+    setTimeout(() => window.scrollTo(0, 0), 0);
   }
   window.addEventListener('hashchange', () => mostrar(location.hash.slice(1)));
   mostrar(location.hash.slice(1));
@@ -109,3 +111,26 @@ function enlazarSlider(id, alCambiar, formato) {
   if (out) out.textContent = formato ? formato(+el.value) : el.value;
   return el;
 }
+
+// Arranque común: las pestañas se activan siempre, aunque falle alguna simulación.
+// (DOMContentLoaded llega después de ejecutar todos los <script> del final del body.)
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.querySelector('nav.tabs')) iniciarPestanas();
+});
+
+// Si algún script falla, se avisa en pantalla en vez de dejar la página en blanco.
+// Se escucha en fase de captura para detectar también scripts que no llegan a cargar (404).
+window.addEventListener('error', ev => {
+  const recurso = ev.target && ev.target !== window ? (ev.target.src || ev.target.href) : null;
+  if (ev.target && ev.target !== window && !recurso) return;
+  let aviso = document.getElementById('aviso-error');
+  if (!aviso) {
+    aviso = document.createElement('div');
+    aviso.id = 'aviso-error';
+    aviso.className = 'reto';
+    aviso.style.margin = '12px 16px';
+    document.body.prepend(aviso);
+  }
+  aviso.innerHTML = '<strong>Algo no ha cargado bien.</strong> Prueba a recargar la página forzando la actualización ' +
+    '(Ctrl+F5, o Cmd+Shift+R en Mac). Detalle: ' + (recurso ? 'no se pudo cargar ' + recurso : ev.message || 'error desconocido');
+}, true);

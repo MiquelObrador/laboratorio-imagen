@@ -33,6 +33,10 @@ python3 -m http.server 8000   # y abrir http://localhost:8000
 
 Cada `git push` posterior actualiza la web.
 
+**Al cambiar un `.js` o `.css`, subir el número de versión** (`?v=3` → `?v=4`)
+en las etiquetas `<script>`/`<link>` de los `.html`. Así el navegador de los
+alumnos no mezcla archivos nuevos con otros viejos guardados en caché.
+
 ## Reglas
 
 - Solo imágenes **sintéticas** o con licencia libre (con atribución). Nunca

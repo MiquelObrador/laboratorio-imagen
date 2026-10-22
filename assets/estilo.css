@@ -117,8 +117,8 @@ canvas.img {
 canvas.plot { width: 100%; height: auto; display: block; }
 
 .ctrl { margin: 10px 0; }
-.ctrl label { display: flex; justify-content: space-between; gap: 8px; font-size: .92rem; }
-.ctrl label output { font-variant-numeric: tabular-nums; font-weight: 600; }
+.ctrl label { display: block; font-size: .92rem; }
+.ctrl label output { float: right; margin-left: 8px; font-variant-numeric: tabular-nums; font-weight: 600; }
 input[type=range] { width: 100%; accent-color: var(--accent-2); }
 
 .btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
