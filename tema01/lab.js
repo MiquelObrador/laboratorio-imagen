@@ -185,7 +185,16 @@ const ruidoBase = (() => {
   const g = crearGauss(crearRng(42));
   return Float32Array.from({ length: N_F * N_F }, () => g());
 })();
-const enObjeto = (x, y) => (x - N_F / 2) ** 2 + (y - N_F / 2) ** 2 <= R_OBJ * R_OBJ;
+// Discos pequeños con el mismo contraste que el objeto grande, para el criterio de Rose.
+const DISCOS = [{ x: 20, y: 146, r: 1.5 }, { x: 45, y: 146, r: 2.5 }, { x: 78, y: 146, r: 4 }, { x: 118, y: 146, r: 7 }];
+const enDisco = (x, y, d) => (x - d.x) ** 2 + (y - d.y) ** 2 <= d.r * d.r;
+const enObjeto = (x, y) => (x - N_F / 2) ** 2 + (y - N_F / 2) ** 2 <= R_OBJ * R_OBJ || DISCOS.some(d => enDisco(x, y, d));
+// Área de cada objeto en píxeles (el disco grande y los pequeños).
+const AREAS = [{ x: N_F / 2, y: N_F / 2, r: R_OBJ }, ...DISCOS].map(d => {
+  let n = 0;
+  for (let y = 0; y < N_F; y++) for (let x = 0; x < N_F; x++) if (enDisco(x, y, d)) n++;
+  return n;
+});
 const rois = { obj: { x: 80, y: 80 }, fondo: { x: 20, y: 20 } };
 
 const snrMo = enlazarSlider('snr-mo', dibujarSNR);
@@ -238,6 +247,20 @@ function dibujarSNR() {
   set('snr-3', o.mu / f.sigma);
   set('snr-4', (o.mu - f.mu) / f.sigma);
   set('snr-5', Math.abs(o.mu - f.mu) / Math.hypot(o.sigma, f.sigma));
+  dibujarRose();
+}
+
+// Criterio de Rose: el ojo promedia todos los píxeles del objeto, así que lo que cuenta
+// es la CNR por píxel multiplicada por √(área): k = CNR·√A. Se ve si k ≳ 5.
+function dibujarRose() {
+  const cnr = Math.abs(+snrMo.value - +snrMf.value) / +snrS.value;
+  const nombres = ['Disco grande', 'Disco de 3 px', 'Disco de 5 px', 'Disco de 8 px', 'Disco de 14 px'];
+  document.getElementById('snr-cnrpx').textContent = fmt1(cnr);
+  document.getElementById('snr-rose').innerHTML = AREAS.map((a, i) => {
+    const k = cnr * Math.sqrt(a);
+    const veredicto = k >= 5 ? '<span class="ok">sí</span>' : k >= 3 ? 'a duras penas' : '<span class="bad">no</span>';
+    return `<tr><td>${nombres[i]}</td><td>${a}</td><td>${fmt1(k)}</td><td>${veredicto}</td></tr>`;
+  }).join('');
 }
 
 function colocarROI(ev) {

@@ -18,7 +18,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Laboratorio de imagen: TC, PET y ecografía simulados">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../assets/estilo.css?v=4">
+<link rel="stylesheet" href="../assets/estilo.css?v=5">
 </head>
 <body>
 <header class="top">
@@ -117,7 +117,7 @@
 <!-- ============ 6. SNR / CNR ============ -->
 <section class="lab" id="snr">
   <h2>SNR y CNR sobre un fantoma</h2>
-  <p class="lead">Un fantoma con un objeto circular sobre un fondo y ruido gaussiano. Haz clic para colocar las ROIs y mide como en un control de calidad real.</p>
+  <p class="lead">Un fantoma con un objeto circular (y cuatro discos pequeños abajo, del mismo contraste) sobre un fondo con ruido gaussiano. Haz clic para colocar las ROIs y mide como en un control de calidad real.</p>
   <div class="grid">
     <div>
       <canvas class="img" id="snr-canvas" aria-label="Fantoma con ROIs"></canvas>
@@ -149,11 +149,20 @@
           <tr><td>CNR = |μ<sub>A</sub> − μ<sub>B</sub>| / √(σ<sub>A</sub>² + σ<sub>B</sub>²)</td><td id="snr-5"></td></tr>
         </table>
       </div>
+      <div class="card">
+        <h3 style="margin-top:0">Criterio de Rose: ¿qué objetos se ven?</h3>
+        <p class="muted" style="margin-top:0">El ojo no mira píxeles sueltos: promedia todo el objeto. Con <i>A</i> píxeles, el ruido del promedio baja √<i>A</i> veces (otra vez la ley de √<i>N</i>). Por eso lo que decide si se ve es <span class="formula">k = CNR<sub>píxel</sub> · √A</span>, y hace falta <b>k ≳ 5</b>. CNR por píxel ahora: <b id="snr-cnrpx"></b>.</p>
+        <table class="stats">
+          <tr><th>Objeto</th><th>Área (px)</th><th>k</th><th>¿Se ve?</th></tr>
+          <tbody id="snr-rose"></tbody>
+        </table>
+      </div>
       <div class="reto">
         <strong>Experimentos.</strong>
         (1) Activa el filtro 3 × 3: ¿σ se divide más o menos entre 3? ¿Y qué le pasa al borde del círculo?
         (2) Pon la ROI del objeto <em>a caballo</em> del borde: ¿qué le pasa a σ<sub>obj</sub>? Es el volumen parcial en acción.
         (3) Iguala μ<sub>obj</sub> y μ<sub>fondo</sub>: la SNR sigue alta, pero la CNR se va a 0. ¿Qué te dice eso de para qué sirve cada una?
+        (4) Pon el ruido en 300 y baja μ<sub>obj</sub> a 300: con una CNR por píxel de solo 0,3 el disco grande se sigue viendo, pero los discos pequeños de abajo desaparecen. ¿Cuál es el último que ves? Compáralo con la tabla de Rose. Es el fundamento de los fantomas de <b>contraste-detalle</b>: los objetos pequeños necesitan más contraste (o menos ruido, es decir, más dosis).
       </div>
     </div>
   </div>
@@ -527,12 +536,12 @@
   </div>
 </footer>
 
-<script src="../assets/comun.js?v=4"></script>
-<script src="lab.js?v=4"></script>
-<script src="pet.js?v=4"></script>
-<script src="ecografia.js?v=4"></script>
-<script src="fourier.js?v=4"></script>
-<script src="calidad.js?v=4"></script>
-<script src="dicom.js?v=4"></script>
+<script src="../assets/comun.js?v=5"></script>
+<script src="lab.js?v=5"></script>
+<script src="pet.js?v=5"></script>
+<script src="ecografia.js?v=5"></script>
+<script src="fourier.js?v=5"></script>
+<script src="calidad.js?v=5"></script>
+<script src="dicom.js?v=5"></script>
 </body>
 </html>
