@@ -183,3 +183,17 @@ footer {
 .temas a.card:hover { border-color: var(--accent-2); }
 .temas .card.off { opacity: .5; }
 .temas .num { color: var(--accent-2); font-weight: 700; font-size: .85rem; }
+
+/* con muchas pestañas, en pantalla ancha pasan a dos filas en vez de desplazarse */
+@media (min-width: 761px) { nav.tabs { white-space: normal; } nav.tabs .wrap { flex-wrap: wrap; } }
+
+/* modo «artefacto misterioso»: los controles se ocultan hasta revelar */
+.oculto { filter: blur(6px); pointer-events: none; user-select: none; }
+
+/* juego de la cabecera DICOM */
+table.dicom td { text-align: left !important; cursor: pointer; vertical-align: top; }
+table.dicom tr:hover td { background: var(--code-bg); }
+table.dicom tr.marcada td { text-decoration: line-through; color: var(--bad); }
+table.dicom td.etq { font-family: ui-monospace, Consolas, monospace; font-size: .8rem; white-space: nowrap; }
+table.dicom .nota { display: inline-block; width: 100%; font-size: .8rem; font-weight: 400; margin-top: 2px; }
+details summary { cursor: pointer; color: var(--accent-2); margin-top: 6px; }

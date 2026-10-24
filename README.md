@@ -9,10 +9,13 @@ dependencias ni paso de compilación. Pensado para publicarse con GitHub Pages.
 ```
 index.html          portada con la lista de temas
 assets/estilo.css   estilos comunes (claro/oscuro, móvil)
-assets/comun.js     utilidades comunes (ruido con semilla, pestañas, sliders...)
+assets/comun.js     utilidades comunes (ruido con semilla, pestañas, sliders, FFT 1D/2D...)
 tema01/             Tema 1: ventanas TC, bits, PET (animación), pulso-eco (animación),
-                    impedancia/Doppler, SNR/CNR, volumen parcial
-                    (lab.js = pestañas estáticas; pet.js y ecografia.js = animaciones)
+                    impedancia/Doppler, SNR/CNR, Fourier con sonido y en imágenes,
+                    MTF, volumen parcial, artefactos de TC, cabecera DICOM
+                    (lab.js = pestañas estáticas; pet.js y ecografia.js = animaciones;
+                    fourier.js = sonido/espectrograma y FFT 2D; calidad.js = MTF y
+                    «rompe el escáner»; dicom.js = juego de anonimización)
 ```
 
 Para añadir un tema: copiar `tema01/` como `temaXX/`, cambiar las pestañas y

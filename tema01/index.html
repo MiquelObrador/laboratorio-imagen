@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tema 1 — Laboratorio de imagen</title>
-<meta name="description" content="Simulaciones interactivas del Tema 1: ventanas en TC, profundidad de bit, SNR/CNR, volumen parcial y ecografía.">
+<meta name="description" content="Simulaciones interactivas del Tema 1: ventanas en TC, profundidad de bit, PET, ecografía, SNR/CNR, Fourier con sonido, MTF, volumen parcial, artefactos de TC y cabecera DICOM.">
 <link rel="icon" href="../assets/icono.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Laboratorio de imagen">
 <meta property="og:locale" content="es_ES">
 <meta property="og:title" content="Laboratorio de imagen · Tema 1">
-<meta property="og:description" content="Ventanas en TC, PET animado, ecografía pulso-eco, Doppler con sonido, SNR/CNR con problemas tipo examen y volumen parcial.">
+<meta property="og:description" content="Ventanas en TC, PET animado, ecografía pulso-eco, Doppler con sonido, SNR/CNR tipo examen, Fourier con sonido, MTF, artefactos de TC y anonimización DICOM.">
 <meta property="og:url" content="https://miquelobrador.github.io/laboratorio-imagen/tema01/">
 <meta property="og:image" content="https://miquelobrador.github.io/laboratorio-imagen/assets/og.jpg">
 <meta property="og:image:type" content="image/jpeg">
@@ -18,7 +18,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Laboratorio de imagen: TC, PET y ecografía simulados">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../assets/estilo.css?v=3">
+<link rel="stylesheet" href="../assets/estilo.css?v=4">
 </head>
 <body>
 <header class="top">
@@ -36,7 +36,12 @@
     <a href="#pulsoeco">4 · Ecografía pulso-eco</a>
     <a href="#eco">5 · Impedancia y Doppler</a>
     <a href="#snr">6 · SNR y CNR</a>
-    <a href="#volumen">7 · Volumen parcial</a>
+    <a href="#sonido">7 · Fourier con sonido</a>
+    <a href="#fourier">8 · Fourier en imágenes</a>
+    <a href="#mtf">9 · Nitidez (MTF)</a>
+    <a href="#volumen">10 · Volumen parcial</a>
+    <a href="#artefactos">11 · Rompe el escáner</a>
+    <a href="#dicom">12 · Cabecera DICOM</a>
   </div>
 </nav>
 
@@ -167,7 +172,205 @@
   </div>
 </section>
 
-<!-- ============ 7. VOLUMEN PARCIAL ============ -->
+<!-- ============ 7. FOURIER CON SONIDO ============ -->
+<section class="lab" id="sonido">
+  <h2>Fourier con sonido: toda señal es una suma de ondas</h2>
+  <p class="lead">Un sonido periódico es una suma de senos: la <b>fundamental</b> f₀ y sus <b>armónicos</b> 2f₀, 3f₀… La lista de amplitudes (el <b>espectro</b>) es la «receta» del sonido. Eso es la transformada de Fourier: pasar de la señal a su receta. No hace falta saber calcularla para entender qué dice.</p>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="muted">Espectro: arrastra el ratón sobre las barras para dibujar tu propio sonido</div>
+        <canvas class="plot" id="fs-espectro" width="560" height="200" aria-label="Espectro editable" style="cursor:crosshair;touch-action:none"></canvas>
+        <div class="btns">
+          <button data-fs-preset="diapason">Diapasón (un seno)</button>
+          <button data-fs-preset="cuadrada">Onda cuadrada</button>
+          <button data-fs-preset="sierra">Diente de sierra</button>
+          <button data-fs-preset="trompeta">«Trompeta»</button>
+        </div>
+        <div class="muted">Forma de onda (naranja: lo que suena; gris discontinuo: el original antes del filtro)</div>
+        <canvas class="plot" id="fs-onda" width="560" height="150" aria-label="Forma de onda"></canvas>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="fs-f0">Fundamental f₀ <output for="fs-f0"></output></label>
+          <input type="range" id="fs-f0" min="110" max="440" step="1" value="220"></div>
+        <div class="ctrl"><label for="fs-corte">Filtro paso bajo: armónicos que pasan <output for="fs-corte"></output></label>
+          <input type="range" id="fs-corte" min="1" max="16" step="1" value="16"></div>
+        <div class="btns"><button class="primary" id="fs-play">▶ Escuchar</button></div>
+        <p class="muted">Al compartir pantalla, activad «Compartir sonido».</p>
+      </div>
+      <div class="reto">
+        <strong>Retos.</strong>
+        (1) Elige la onda cuadrada, escúchala y ve bajando el filtro. ¿Qué le pasa al sonido? ¿Y a las <b>esquinas</b> de la onda?
+        (2) Con un solo armónico, ¿qué forma tiene la onda?
+        (3) La conexión con la imagen: un borde nítido es como la esquina de la onda cuadrada. Un sistema de imagen con mala resolución es un <b>filtro paso bajo</b>: redondea los bordes. Eso es lo que mide la MTF (pestaña 9).
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Espectrograma en directo</h3>
+    <p class="muted" style="margin-top:0">Es la transformada de Fourier calculada cada pocos milisegundos: el tiempo va en horizontal, la frecuencia en vertical y el color indica la intensidad.</p>
+    <div style="position:relative">
+      <canvas class="img" id="fs-grama" width="720" height="256" aria-label="Espectrograma"></canvas>
+      <canvas id="fs-grama-ejes" width="720" height="256" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
+    </div>
+    <div class="btns">
+      <button id="fs-micro">🎤 Usar el micrófono</button>
+      <button id="fs-barrido">▶ Barrido de 100 a 4000 Hz</button>
+    </div>
+    <div class="readout" id="fs-micro-aviso">El sonido de «Escuchar» también aparece aquí: una raya por armónico.</div>
+    <div class="reto"><strong>Prueba.</strong> Silba (una raya), di «aaaa» (muchas rayas paralelas: los armónicos de tu voz) y luego «ssss» (una mancha en frecuencias altas: ruido). Una voz grave y una aguda, ¿en qué se diferencian?</div>
+  </div>
+</section>
+
+<!-- ============ 8. FOURIER EN IMÁGENES ============ -->
+<section class="lab" id="fourier">
+  <h2>Fourier en imágenes</h2>
+  <p class="lead">Una imagen también es una suma de ondas, pero en 2D: rayas de distintas anchuras y orientaciones. En el espectro, el <b>centro</b> son las ondas anchas (zonas suaves) y los <b>puntos lejanos</b>, las finas (bordes, detalles, ruido).</p>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+    <div><div class="muted">Imagen</div><canvas class="img" id="fi-img" aria-label="Imagen original"></canvas></div>
+    <div><div class="muted">Espectro (centro = frecuencias bajas)</div><canvas class="img" id="fi-esp" aria-label="Espectro de Fourier"></canvas></div>
+    <div><div class="muted">Imagen filtrada</div><canvas class="img" id="fi-res" aria-label="Imagen filtrada"></canvas></div>
+  </div>
+  <div class="grid" style="margin-top:12px">
+    <div class="card">
+      <div class="radios">
+        <label><input type="radio" name="fi-fuente" value="onda" checked> Una onda</label>
+        <label><input type="radio" name="fi-fuente" value="dos"> Dos ondas</label>
+        <label><input type="radio" name="fi-fuente" value="cuadro"> Un cuadrado</label>
+        <label><input type="radio" name="fi-fuente" value="tc"> TC de tórax</label>
+      </div>
+      <div id="fi-ctrl-onda">
+        <div class="ctrl"><label for="fi-freq">Frecuencia <output for="fi-freq"></output></label>
+          <input type="range" id="fi-freq" min="1" max="60" step="1" value="8"></div>
+        <div class="ctrl"><label for="fi-ang">Orientación <output for="fi-ang"></output></label>
+          <input type="range" id="fi-ang" min="0" max="175" step="5" value="0"></div>
+      </div>
+      <div class="radios" style="margin-top:8px">
+        <label><input type="radio" name="fi-filtro" value="nada" checked> Sin filtro</label>
+        <label><input type="radio" name="fi-filtro" value="bajo"> Paso bajo</label>
+        <label><input type="radio" name="fi-filtro" value="alto"> Paso alto</label>
+      </div>
+      <div class="ctrl" id="fi-ctrl-corte"><label for="fi-corte">Frecuencia de corte <output for="fi-corte"></output></label>
+        <input type="range" id="fi-corte" min="2" max="128" step="1" value="20"></div>
+    </div>
+    <div>
+      <div class="card"><div id="fi-texto"></div></div>
+      <div class="reto"><strong>Retos.</strong>
+        (1) Con «Una onda», sube la frecuencia: ¿hacia dónde se mueven los puntos? Gira la onda: ¿y ahora?
+        (2) Con el TC, aplica un paso bajo de radio 10: ¿qué se pierde primero, los vasos pequeños o el contorno del cuerpo?
+        (3) Con el cuadrado y un paso bajo, ¿ves las ondulaciones junto a los bordes? En RM se llaman artefacto de <b>truncamiento</b> (o de Gibbs).
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. MTF ============ -->
+<section class="lab" id="mtf">
+  <h2>Nitidez: la MTF con un patrón de barras</h2>
+  <p class="lead">Arriba, un fantoma de barras: grupos de 4 pares de líneas cada vez más finos (en pares de líneas por mm). Abajo, lo que da un sistema que emborrona cada punto con una gaussiana de anchura σ. La <b>MTF</b> dice qué fracción del contraste sobrevive a cada frecuencia: <span class="formula">M = (I<sub>máx</sub> − I<sub>mín</sub>) / (I<sub>máx</sub> + I<sub>mín</sub>)</span>, <span class="formula">MTF(f) = M<sub>salida</sub> / M<sub>entrada</sub></span>.</p>
+  <canvas class="img" id="mtf-img" aria-label="Patrón de barras: objeto y señal desenfocada" style="image-rendering:auto"></canvas>
+  <canvas class="plot" id="mtf-perfil" width="1000" height="150" aria-label="Perfil de intensidad"></canvas>
+  <p class="muted">Perfil (gris: objeto, naranja: imagen). Arriba, el contraste que sobrevive en cada grupo; abajo, su frecuencia en pares de líneas/mm.</p>
+  <div class="grid">
+    <div class="card">
+      <canvas class="plot" id="mtf-curva" width="460" height="230" aria-label="Curva MTF"></canvas>
+      <div class="readout" id="mtf-lim" style="color:var(--text)"></div>
+      <p class="muted">Curva: MTF del sistema. Puntos: contraste medido en cada grupo. Con barras (onda cuadrada) los puntos quedan algo por encima de la curva; con senos coinciden. ¿Por qué? Pista: pestaña 7.</p>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="mtf-sigma">Desenfoque del sistema, σ <output for="mtf-sigma"></output></label>
+          <input type="range" id="mtf-sigma" min="0.03" max="0.5" step="0.01" value="0.12"></div>
+        <div class="btns">
+          <button data-mtf-sigma="0.04">Mamografía</button>
+          <button data-mtf-sigma="0.12">RX de tórax digital</button>
+          <button data-mtf-sigma="0.35">TC</button>
+        </div>
+        <div class="radios">
+          <label><input type="radio" name="mtf-forma" value="barras" checked> Barras</label>
+          <label><input type="radio" name="mtf-forma" value="senos"> Senos</label>
+        </div>
+        <p class="muted">Valores orientativos: la mamografía necesita ver microcalcificaciones de décimas de mm; el TC sacrifica resolución a cambio de ver en 3D.</p>
+      </div>
+      <div class="reto"><strong>Retos.</strong>
+        (1) Con la RX de tórax, ¿qué grupo es el último en el que distingues las barras? Compáralo con la resolución límite.
+        (2) Si un sistema llega a 5 pares de líneas/mm, ¿cuál es el detalle más fino que ve? (Un par = una línea clara + una oscura.)
+        (3) Duplica σ: ¿qué le pasa a la resolución límite?
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11. ROMPE EL ESCÁNER ============ -->
+<section class="lab" id="artefactos">
+  <h2>Rompe el escáner: artefactos en TC</h2>
+  <p class="lead">El TC de tórax de la pestaña 1, adquirido y reconstruido de verdad: 180 proyecciones con ruido de Poisson y retroproyección filtrada (como en el PET). Estropea la adquisición y mira qué pasa en el <b>sinograma</b> y en la <b>imagen</b>. Cada artefacto es una pista de cómo funciona el escáner.</p>
+  <div class="grid">
+    <div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
+        <div><div class="muted">Imagen reconstruida</div><canvas class="img" id="art-img" aria-label="TC reconstruido"></canvas></div>
+        <div><div class="muted">Sinograma (fila = ángulo)</div><canvas class="img" id="art-sino" aria-label="Sinograma"></canvas></div>
+      </div>
+      <div class="btns">
+        <button data-art-wl="40" data-art-ww="400">Mediastino</button>
+        <button data-art-wl="-600" data-art-ww="1500">Pulmón</button>
+        <button data-art-wl="400" data-art-ww="1800">Hueso</button>
+      </div>
+    </div>
+    <div>
+      <div class="btns">
+        <button class="primary" id="art-misterio">🎲 Artefacto misterioso</button>
+        <button id="art-revelar">Revelar</button>
+        <button id="art-normal">Escáner en buen estado</button>
+      </div>
+      <div class="card" id="art-panel">
+        <div class="ctrl"><label for="art-dosis">Dosis <output for="art-dosis"></output></label>
+          <input type="range" id="art-dosis" min="0" max="6" step="1" value="5"></div>
+        <div class="ctrl"><label for="art-proy">Número de proyecciones <output for="art-proy"></output></label>
+          <input type="range" id="art-proy" min="0" max="8" step="1" value="8"></div>
+        <div class="ctrl"><label for="art-mov">El paciente se mueve a mitad de la adquisición <output for="art-mov"></output></label>
+          <input type="range" id="art-mov" min="0" max="15" step="1" value="0"></div>
+        <label class="muted" style="display:block"><input type="checkbox" id="art-anillo"> Un detector descalibrado</label>
+        <label class="muted" style="display:block"><input type="checkbox" id="art-metal"> Tornillos de acero en la columna</label>
+      </div>
+      <div class="card"><div id="art-explica"></div></div>
+    </div>
+  </div>
+  <p class="muted">Modelo simplificado: haz paralelo y monoenergético (salvo en el metal), sin radiación dispersa.</p>
+</section>
+
+<!-- ============ 12. CABECERA DICOM ============ -->
+<section class="lab" id="dicom">
+  <h2>Anonimiza la cabecera DICOM</h2>
+  <p class="lead">Un archivo DICOM lleva la imagen y una <b>cabecera</b> con cientos de etiquetas (aquí, una selección). Quieres compartir este TC para un proyecto de investigación. <b>Pulsa las filas que borrarías</b> y luego «Comprobar». Ojo: si borras datos técnicos, la imagen deja de servir.</p>
+  <div class="grid">
+    <div class="card" style="overflow-x:auto">
+      <table class="stats dicom">
+        <tr><th>Etiqueta</th><th>Nombre</th><th>Valor</th></tr>
+        <tbody id="dc-tabla"></tbody>
+      </table>
+    </div>
+    <div>
+      <canvas class="img" id="dc-img" aria-label="Imagen del estudio"></canvas>
+      <div class="btns">
+        <button class="primary" id="dc-comprobar">Comprobar</button>
+        <button id="dc-reiniciar">Empezar de nuevo</button>
+      </div>
+      <div class="readout" id="dc-resultado" style="color:var(--text)"></div>
+      <div class="reto"><strong>Busca en la cabecera.</strong>
+        (1) ¿Qué grosor de corte tiene? (2) ¿Cuántos niveles de gris distintos puede guardar cada píxel? (3) ¿Cuánto ocupan los píxeles de esta imagen? ¿Y un TC de 500 cortes?
+        <details><summary>Soluciones</summary>
+          (1) SliceThickness = 1,25 mm. (2) BitsStored = 12 → 2¹² = 4096 niveles. (3) 512 × 512 píxeles × 2 bytes (BitsAllocated = 16) = 512 KiB; con 500 cortes, unos 250 MiB.
+        </details>
+      </div>
+      <div class="reto"><strong>¿Basta con borrar el nombre?</strong> En 2019 un grupo de la Clínica Mayo reconstruyó en 3D la cara de 84 voluntarios a partir de sus RM de cabeza y un programa de reconocimiento facial acertó quién era cada uno en el 83 % de los casos (Schwarz et al., <i>N Engl J Med</i> 381:1684, 2019). Por eso en investigación también se «borra la cara» de las imágenes (<i>defacing</i>).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10. VOLUMEN PARCIAL ============ -->
 <section class="lab" id="volumen">
   <h2>Efecto de volumen parcial</h2>
   <p class="lead">Vista lateral (eje <i>z</i> vertical) de un tejido con tres lesiones de 3, 6 y 15 mm. El escáner promedia todo lo que hay dentro de cada corte de grosor <i>e</i>.</p>
@@ -324,9 +527,12 @@
   </div>
 </footer>
 
-<script src="../assets/comun.js?v=3"></script>
-<script src="lab.js?v=3"></script>
-<script src="pet.js?v=3"></script>
-<script src="ecografia.js?v=3"></script>
+<script src="../assets/comun.js?v=4"></script>
+<script src="lab.js?v=4"></script>
+<script src="pet.js?v=4"></script>
+<script src="ecografia.js?v=4"></script>
+<script src="fourier.js?v=4"></script>
+<script src="calidad.js?v=4"></script>
+<script src="dicom.js?v=4"></script>
 </body>
 </html>

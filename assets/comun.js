@@ -82,6 +82,48 @@ function mediaDesv(vals) {
   return { mu, sigma: Math.sqrt(q / (n - 1)) };
 }
 
+// FFT compleja radix-2 en el sitio (n potencia de 2). Con inversa=true divide entre n.
+function fft(re, im, inversa) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) {
+      let t = re[i]; re[i] = re[j]; re[j] = t;
+      t = im[i]; im[i] = im[j]; im[j] = t;
+    }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = (inversa ? 2 : -2) * Math.PI / len;
+    const wr = Math.cos(ang), wi = Math.sin(ang), med = len >> 1;
+    for (let i = 0; i < n; i += len) {
+      let cr = 1, ci = 0;
+      for (let k = 0; k < med; k++) {
+        const a = i + k, b = a + med;
+        const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti;
+        re[a] += tr; im[a] += ti;
+        const t = cr * wr - ci * wi;
+        ci = cr * wi + ci * wr;
+        cr = t;
+      }
+    }
+  }
+  if (inversa) for (let i = 0; i < n; i++) { re[i] /= n; im[i] /= n; }
+}
+
+// FFT 2D de una imagen n × n (filas y luego columnas), en el sitio.
+function fft2(re, im, n, inversa) {
+  for (let f = 0; f < n; f++) fft(re.subarray(f * n, f * n + n), im.subarray(f * n, f * n + n), inversa);
+  const cr = new Float64Array(n), ci = new Float64Array(n);
+  for (let c = 0; c < n; c++) {
+    for (let f = 0; f < n; f++) { cr[f] = re[f * n + c]; ci[f] = im[f * n + c]; }
+    fft(cr, ci, inversa);
+    for (let f = 0; f < n; f++) { re[f * n + c] = cr[f]; im[f * n + c] = ci[f]; }
+  }
+}
+
 // Pestañas: <nav class="tabs"> con enlaces #id y <section class="lab" id="id">.
 function iniciarPestanas(alCambiar) {
   const enlaces = [...document.querySelectorAll('nav.tabs a')];
