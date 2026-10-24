@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tema 1 — Laboratorio de imagen</title>
-<meta name="description" content="Simulaciones interactivas del Tema 1: ventanas en TC, profundidad de bit, PET, ecografía, SNR/CNR, Fourier con sonido, MTF, volumen parcial, artefactos de TC y cabecera DICOM.">
+<meta name="description" content="Simulaciones interactivas del Tema 1: ventanas en TC, profundidad de bit, PET, ecografía, SNR/CNR, Fourier con sonido, volumen parcial, artefactos de TC y cabecera DICOM.">
 <link rel="icon" href="../assets/icono.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Laboratorio de imagen">
 <meta property="og:locale" content="es_ES">
 <meta property="og:title" content="Laboratorio de imagen · Tema 1">
-<meta property="og:description" content="Ventanas en TC, PET animado, ecografía pulso-eco, Doppler con sonido, SNR/CNR tipo examen, Fourier con sonido, MTF, artefactos de TC y anonimización DICOM.">
+<meta property="og:description" content="Ventanas en TC, PET animado, ecografía pulso-eco, Doppler con sonido, SNR/CNR tipo examen, Fourier con sonido, artefactos de TC y anonimización DICOM.">
 <meta property="og:url" content="https://miquelobrador.github.io/laboratorio-imagen/tema01/">
 <meta property="og:image" content="https://miquelobrador.github.io/laboratorio-imagen/assets/og.jpg">
 <meta property="og:image:type" content="image/jpeg">
@@ -18,7 +18,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Laboratorio de imagen: TC, PET y ecografía simulados">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../assets/estilo.css?v=5">
+<link rel="stylesheet" href="../assets/estilo.css?v=6">
 </head>
 <body>
 <header class="top">
@@ -38,10 +38,9 @@
     <a href="#snr">6 · SNR y CNR</a>
     <a href="#sonido">7 · Fourier con sonido</a>
     <a href="#fourier">8 · Fourier en imágenes</a>
-    <a href="#mtf">9 · Nitidez (MTF)</a>
-    <a href="#volumen">10 · Volumen parcial</a>
-    <a href="#artefactos">11 · Rompe el escáner</a>
-    <a href="#dicom">12 · Cabecera DICOM</a>
+    <a href="#volumen">9 · Volumen parcial</a>
+    <a href="#artefactos">10 · Rompe el escáner</a>
+    <a href="#dicom">11 · Cabecera DICOM</a>
   </div>
 </nav>
 
@@ -213,7 +212,7 @@
         <strong>Retos.</strong>
         (1) Elige la onda cuadrada, escúchala y ve bajando el filtro. ¿Qué le pasa al sonido? ¿Y a las <b>esquinas</b> de la onda?
         (2) Con un solo armónico, ¿qué forma tiene la onda?
-        (3) La conexión con la imagen: un borde nítido es como la esquina de la onda cuadrada. Un sistema de imagen con mala resolución es un <b>filtro paso bajo</b>: redondea los bordes. Eso es lo que mide la MTF (pestaña 9).
+        (3) La conexión con la imagen: un borde nítido es como la esquina de la onda cuadrada. Un sistema de imagen borroso es un <b>filtro paso bajo</b>: redondea los bordes. Lo usaremos en el Tema 2.
       </div>
     </div>
   </div>
@@ -275,44 +274,7 @@
   </div>
 </section>
 
-<!-- ============ 9. MTF ============ -->
-<section class="lab" id="mtf">
-  <h2>Nitidez: la MTF con un patrón de barras</h2>
-  <p class="lead">Arriba, un fantoma de barras: grupos de 4 pares de líneas cada vez más finos (en pares de líneas por mm). Abajo, lo que da un sistema que emborrona cada punto con una gaussiana de anchura σ. La <b>MTF</b> dice qué fracción del contraste sobrevive a cada frecuencia: <span class="formula">M = (I<sub>máx</sub> − I<sub>mín</sub>) / (I<sub>máx</sub> + I<sub>mín</sub>)</span>, <span class="formula">MTF(f) = M<sub>salida</sub> / M<sub>entrada</sub></span>.</p>
-  <canvas class="img" id="mtf-img" aria-label="Patrón de barras: objeto y señal desenfocada" style="image-rendering:auto"></canvas>
-  <canvas class="plot" id="mtf-perfil" width="1000" height="150" aria-label="Perfil de intensidad"></canvas>
-  <p class="muted">Perfil (gris: objeto, naranja: imagen). Arriba, el contraste que sobrevive en cada grupo; abajo, su frecuencia en pares de líneas/mm.</p>
-  <div class="grid">
-    <div class="card">
-      <canvas class="plot" id="mtf-curva" width="460" height="230" aria-label="Curva MTF"></canvas>
-      <div class="readout" id="mtf-lim" style="color:var(--text)"></div>
-      <p class="muted">Curva: MTF del sistema. Puntos: contraste medido en cada grupo. Con barras (onda cuadrada) los puntos quedan algo por encima de la curva; con senos coinciden. ¿Por qué? Pista: pestaña 7.</p>
-    </div>
-    <div>
-      <div class="card">
-        <div class="ctrl"><label for="mtf-sigma">Desenfoque del sistema, σ <output for="mtf-sigma"></output></label>
-          <input type="range" id="mtf-sigma" min="0.03" max="0.5" step="0.01" value="0.12"></div>
-        <div class="btns">
-          <button data-mtf-sigma="0.04">Mamografía</button>
-          <button data-mtf-sigma="0.12">RX de tórax digital</button>
-          <button data-mtf-sigma="0.35">TC</button>
-        </div>
-        <div class="radios">
-          <label><input type="radio" name="mtf-forma" value="barras" checked> Barras</label>
-          <label><input type="radio" name="mtf-forma" value="senos"> Senos</label>
-        </div>
-        <p class="muted">Valores orientativos: la mamografía necesita ver microcalcificaciones de décimas de mm; el TC sacrifica resolución a cambio de ver en 3D.</p>
-      </div>
-      <div class="reto"><strong>Retos.</strong>
-        (1) Con la RX de tórax, ¿qué grupo es el último en el que distingues las barras? Compáralo con la resolución límite.
-        (2) Si un sistema llega a 5 pares de líneas/mm, ¿cuál es el detalle más fino que ve? (Un par = una línea clara + una oscura.)
-        (3) Duplica σ: ¿qué le pasa a la resolución límite?
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ 11. ROMPE EL ESCÁNER ============ -->
+<!-- ============ 10. ROMPE EL ESCÁNER ============ -->
 <section class="lab" id="artefactos">
   <h2>Rompe el escáner: artefactos en TC</h2>
   <p class="lead">El TC de tórax de la pestaña 1, adquirido y reconstruido de verdad: 180 proyecciones con ruido de Poisson y retroproyección filtrada (como en el PET). Estropea la adquisición y mira qué pasa en el <b>sinograma</b> y en la <b>imagen</b>. Cada artefacto es una pista de cómo funciona el escáner.</p>
@@ -350,7 +312,7 @@
   <p class="muted">Modelo simplificado: haz paralelo y monoenergético (salvo en el metal), sin radiación dispersa.</p>
 </section>
 
-<!-- ============ 12. CABECERA DICOM ============ -->
+<!-- ============ 11. CABECERA DICOM ============ -->
 <section class="lab" id="dicom">
   <h2>Anonimiza la cabecera DICOM</h2>
   <p class="lead">Un archivo DICOM lleva la imagen y una <b>cabecera</b> con cientos de etiquetas (aquí, una selección). Quieres compartir este TC para un proyecto de investigación. <b>Pulsa las filas que borrarías</b> y luego «Comprobar». Ojo: si borras datos técnicos, la imagen deja de servir.</p>
@@ -379,7 +341,7 @@
   </div>
 </section>
 
-<!-- ============ 10. VOLUMEN PARCIAL ============ -->
+<!-- ============ 9. VOLUMEN PARCIAL ============ -->
 <section class="lab" id="volumen">
   <h2>Efecto de volumen parcial</h2>
   <p class="lead">Vista lateral (eje <i>z</i> vertical) de un tejido con tres lesiones de 3, 6 y 15 mm. El escáner promedia todo lo que hay dentro de cada corte de grosor <i>e</i>.</p>
@@ -536,12 +498,12 @@
   </div>
 </footer>
 
-<script src="../assets/comun.js?v=5"></script>
-<script src="lab.js?v=5"></script>
-<script src="pet.js?v=5"></script>
-<script src="ecografia.js?v=5"></script>
-<script src="fourier.js?v=5"></script>
-<script src="calidad.js?v=5"></script>
-<script src="dicom.js?v=5"></script>
+<script src="../assets/comun.js?v=6"></script>
+<script src="lab.js?v=6"></script>
+<script src="pet.js?v=6"></script>
+<script src="ecografia.js?v=6"></script>
+<script src="fourier.js?v=6"></script>
+<script src="calidad.js?v=6"></script>
+<script src="dicom.js?v=6"></script>
 </body>
 </html>

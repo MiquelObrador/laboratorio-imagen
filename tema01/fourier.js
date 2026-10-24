@@ -372,7 +372,7 @@
         (modo === 'bajo' && +slFreq.value > r0 ? ' El filtro paso bajo la ha borrado: es «demasiado fina» para pasar.' : '');
     if (f === 'dos') return 'Dos ondas son cuatro puntos: el espectro es la «receta» de qué ondas forman la imagen. Con un paso bajo de radio intermedio puedes quedarte solo con la más ancha.';
     if (f === 'cuadro') return 'Un borde brusco necesita <b>muchas frecuencias</b> (la cruz del espectro llega muy lejos). Si cortas las altas, el borde se redondea y aparecen ondulaciones (artefacto de Gibbs o de truncamiento, típico de RM).';
-    if (modo === 'bajo') return 'Paso bajo: solo pasan las frecuencias cercanas al centro. La imagen pierde los <b>detalles finos</b>: es lo que hace un sistema con mala resolución espacial (MTF que cae pronto).';
+    if (modo === 'bajo') return 'Paso bajo: solo pasan las frecuencias cercanas al centro. La imagen pierde los <b>detalles finos</b>: es lo que hace un sistema con mala resolución espacial.';
     if (modo === 'alto') return 'Paso alto: quitas lo «grueso» y quedan los <b>bordes y los detalles finos</b> (y el ruido). Lo usaremos en el Tema 2 para realzar bordes.';
     return 'El centro del espectro son las frecuencias bajas (zonas grandes y suaves); lejos del centro, las altas (bordes, detalles finos, ruido). Escala logarítmica.';
   }
