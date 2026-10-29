@@ -343,29 +343,29 @@
 
 <!-- ============ 9. VOLUMEN PARCIAL ============ -->
 <section class="lab" id="volumen">
-  <h2>Efecto de volumen parcial</h2>
-  <p class="lead">Vista lateral (eje <i>z</i> vertical) de un tejido con tres lesiones de 3, 6 y 15 mm. El escáner promedia todo lo que hay dentro de cada corte de grosor <i>e</i>.</p>
+  <h2>Efecto de volumen parcial: el nódulo que se disfraza</h2>
+  <p class="lead">Un nódulo de <b>3 mm</b> (+40 HU) dentro del pulmón (−850 HU). El TC no ve puntos: cada vóxel vale la <b>media</b> de lo que hay dentro, y el vóxel es tan alto como el <b>grosor de corte</b>.</p>
   <div class="grid">
     <div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div><div class="muted">Realidad</div><canvas class="img" id="vp-real" aria-label="Objeto real"></canvas></div>
-        <div><div class="muted">Lo que ve el escáner</div><canvas class="img" id="vp-scan" aria-label="Imagen promediada por cortes"></canvas></div>
+        <div><div class="muted">De lado (corte en naranja)</div><canvas class="img" id="vp-lado" aria-label="Vista lateral del nódulo y del corte"></canvas></div>
+        <div><div class="muted">La imagen de ese corte</div><canvas class="img" id="vp-axial" aria-label="Imagen axial del corte"></canvas></div>
       </div>
     </div>
     <div>
       <div class="card">
         <div class="ctrl"><label for="vp-e">Grosor de corte, <i>e</i> <output for="vp-e"></output></label>
-          <input type="range" id="vp-e" min="1" max="30" step="0.5" value="10"></div>
-        <div class="ctrl"><label for="vp-off">Posición de los cortes <output for="vp-off"></output></label>
-          <input type="range" id="vp-off" min="0" max="1" step="0.01" value="0"></div>
-        <table class="stats">
-          <tr><th>Lesión</th><th>Contraste real</th><th>Contraste visto</th></tr>
-          <tbody id="vp-tabla"></tbody>
-        </table>
+          <input type="range" id="vp-e" min="1" max="10" step="0.5" value="1"></div>
+        <div class="ctrl"><label for="vp-pos">Posición del corte <output for="vp-pos"></output></label>
+          <input type="range" id="vp-pos" min="-6" max="6" step="0.5" value="0"></div>
+        <p class="muted" style="margin:10px 0 4px">Vóxel del centro del nódulo:</p>
+        <p class="formula" id="vp-cuenta" style="font-size:1.1rem"></p>
+        <p id="vp-veredicto" style="margin:8px 0 0"></p>
       </div>
       <div class="reto">
-        <strong>Reto.</strong> ¿A partir de qué grosor de corte la lesión de 3 mm baja del 25 % de su contraste real? Mueve también la posición de los cortes: con el mismo grosor, ¿la lesión puede «aparecer» o «desaparecer» según caiga el corte?
-        (Es la Figura 7 del temario.)
+        <strong>Reto.</strong> (1) Con un corte de <b>10 mm</b>, ¿cuánto vale el vóxel? Compáralo con la diapositiva 4.3 bis.
+        (2) Deja 10 mm y mueve el corte hasta que solo coja medio nódulo: ¿qué pasa?
+        (3) ¿Con qué grosor máximo el nódulo sigue valiendo +40 HU? (Es la Figura 7 del temario.)
       </div>
     </div>
   </div>
@@ -499,7 +499,7 @@
 </footer>
 
 <script src="../assets/comun.js?v=6"></script>
-<script src="lab.js?v=6"></script>
+<script src="lab.js?v=7"></script>
 <script src="pet.js?v=6"></script>
 <script src="ecografia.js?v=6"></script>
 <script src="fourier.js?v=6"></script>
