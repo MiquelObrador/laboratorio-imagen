@@ -322,26 +322,42 @@ document.getElementById('ex-nuevo').addEventListener('click', nuevoProblema);
 document.getElementById('ex-comprobar').addEventListener('click', comprobar);
 
 /* =====================================================================
-   4. Volumen parcial (el nódulo de la diapositiva 4.3 bis)
+   4. Volumen parcial (el nódulo de la diapositiva 4.3 bis, y varias lesiones)
    ===================================================================== */
-const HU_NOD = 40, HU_PULMON = -850, R_NOD = 1.5;  // nódulo de 3 mm
+const HU_NOD = 40, HU_PULMON = -850;
 const CAMPO = 16;                                   // mm que se ven en cada imagen
 const N_AX = 64, PX_AX = CAMPO / N_AX;              // vóxel de 0,25 mm en el plano
 const huAGris = hu => (hu + 1350) / 1500;           // ventana de pulmón: WL −600, WW 1500
 const coma = (x, d) => x.toFixed(d).replace('.', ',');
+const conSigno = hu => `${hu > 0 ? '+' : hu < 0 ? '−' : ''}${Math.abs(Math.round(hu))} HU`;
+// Lesiones esféricas (mm, centro del campo = 0). A y B casi en el mismo sitio del plano, a 5 mm de altura.
+const ESCENAS_VP = {
+  uno: [{ n: 'nódulo 3 mm', x: 0, y: 0, z: 0, r: 1.5 }],
+  varias: [
+    { n: 'A', x: -1.2, y: 0, z: -2.5, r: 2 },
+    { n: 'B', x: 1.2, y: 0.4, z: 2.5, r: 2 },
+    { n: 'C', x: 4.5, y: -3, z: 0, r: 1.25 },
+  ],
+};
+let escenaVP = document.querySelector('input[name="vp-escena"]:checked').value, huVP = new Float32Array(N_AX * N_AX);
 
 const vpE = enlazarSlider('vp-e', dibujarVP, v => `${String(v).replace('.', ',')} mm`);
-const vpPos = enlazarSlider('vp-pos', dibujarVP, v => (+v === 0 ? 'centrado en el nódulo' : `${+v > 0 ? '+' : '−'}${String(Math.abs(v)).replace('.', ',')} mm`));
+const vpPos = enlazarSlider('vp-pos', dibujarVP, v => (+v === 0 ? (escenaVP === 'uno' ? 'centrado en el nódulo' : '0 mm') : `${+v > 0 ? '+' : '−'}${String(Math.abs(v)).replace('.', ',')} mm`));
+document.querySelectorAll('input[name="vp-escena"]').forEach(r => r.addEventListener('change', () => {
+  escenaVP = r.value;
+  vpPos.dispatchEvent(new Event('input'));          // actualiza la etiqueta y redibuja
+}));
 
-// Fracción del vóxel (columna a distancia r del eje del nódulo) ocupada por el nódulo.
-function fraccionNodulo(r, z0, z1) {
-  if (r >= R_NOD) return 0;
-  const h = Math.sqrt(R_NOD * R_NOD - r * r);
-  return Math.max(0, Math.min(z1, h) - Math.max(z0, -h)) / (z1 - z0);
+// Fracción del vóxel (columna a distancia r del eje de la lesión) que ocupa la lesión.
+function fraccionLesion(l, r, z0, z1) {
+  if (r >= l.r) return 0;
+  const h = Math.sqrt(l.r * l.r - r * r);
+  return Math.max(0, Math.min(z1, l.z + h) - Math.max(z0, l.z - h)) / (z1 - z0);
 }
 
 function dibujarVP() {
   const e = +vpE.value, zc = +vpPos.value, z0 = zc - e / 2, z1 = zc + e / 2;
+  const lesiones = ESCENAS_VP[escenaVP];
 
   // Vista lateral: realidad (x horizontal, z vertical) y la franja del corte.
   const lado = document.getElementById('vp-lado'), L = 320, esc = L / CAMPO;
@@ -350,38 +366,62 @@ function dibujarVP() {
   c.fillStyle = `rgb(${Array(3).fill(Math.round(huAGris(HU_PULMON) * 255)).join(',')})`;
   c.fillRect(0, 0, L, L);
   c.fillStyle = `rgb(${Array(3).fill(Math.round(huAGris(HU_NOD) * 255)).join(',')})`;
-  c.beginPath(); c.arc(L / 2, L / 2, R_NOD * esc, 0, 2 * Math.PI); c.fill();
+  for (const l of lesiones) { c.beginPath(); c.arc(L / 2 + l.x * esc, L / 2 - l.z * esc, l.r * esc, 0, 2 * Math.PI); c.fill(); }
   const y0 = L / 2 - z1 * esc, y1 = L / 2 - z0 * esc;
   c.fillStyle = 'rgba(235,129,27,0.28)'; c.fillRect(0, y0, L, y1 - y0);
   c.strokeStyle = 'rgba(235,129,27,0.95)'; c.lineWidth = 2;
   c.beginPath(); c.moveTo(0, y0); c.lineTo(L, y0); c.moveTo(0, y1); c.lineTo(L, y1); c.stroke();
   c.fillStyle = '#fff'; c.font = '14px system-ui, sans-serif';
   c.fillText(`corte de ${String(e).replace('.', ',')} mm`, 8, Math.max(16, y0 - 6));
-  c.fillText('z', 8, L - 10); c.fillText('nódulo 3 mm', L / 2 + R_NOD * esc + 6, L / 2 + 5);
+  c.fillText('z', 8, L - 10);
+  for (const l of lesiones) c.fillText(l.n, L / 2 + (l.x + l.r) * esc + 6, L / 2 - l.z * esc + 5);
 
-  // Imagen axial: cada vóxel promedia el nódulo y el pulmón a lo largo del grosor de corte.
+  // Imagen axial: cada vóxel promedia lesiones y pulmón a lo largo del grosor de corte.
   const ax = new Float32Array(N_AX * N_AX);
   for (let j = 0; j < N_AX; j++)
     for (let i = 0; i < N_AX; i++) {
-      const r = Math.hypot((i + 0.5) * PX_AX - CAMPO / 2, (j + 0.5) * PX_AX - CAMPO / 2);
-      const f = fraccionNodulo(r, z0, z1);
-      ax[j * N_AX + i] = huAGris(f * HU_NOD + (1 - f) * HU_PULMON);
+      const x = (i + 0.5) * PX_AX - CAMPO / 2, y = (j + 0.5) * PX_AX - CAMPO / 2;
+      const f = lesiones.reduce((s, l) => s + fraccionLesion(l, Math.hypot(x - l.x, y - l.y), z0, z1), 0);
+      huVP[j * N_AX + i] = f * HU_NOD + (1 - f) * HU_PULMON;
+      ax[j * N_AX + i] = huAGris(huVP[j * N_AX + i]);
     }
   pintarGrises(document.getElementById('vp-axial'), ax, N_AX, N_AX);
 
-  // La cuenta del vóxel central, como en la diapositiva.
-  const f = fraccionNodulo(0, z0, z1), hu = f * HU_NOD + (1 - f) * HU_PULMON;
-  document.getElementById('vp-cuenta').innerHTML = f >= 1
-    ? `vóxel = 1 · (+40) = <b>+40 HU</b>`
-    : `vóxel = ${coma(f, 2)} · (+40) + ${coma(1 - f, 2)} · (−850) = <b>${hu > 0 ? '+' : '−'}${Math.abs(Math.round(hu))} HU</b>`;
-  document.getElementById('vp-veredicto').innerHTML = f >= 1
-    ? '<span class="ok">El corte cabe dentro del nódulo: vale lo que vale de verdad.</span>'
-    : f === 0
-      ? '<span class="bad">El corte no toca el nódulo: no existe en esta imagen.</span>'
-      : f < 0.35
-        ? `<span class="bad">Solo el ${Math.round(f * 100)} % del vóxel es nódulo: parece pulmón un poco más denso. Se disfraza.</span>`
-        : `Mezcla: el ${Math.round(f * 100)} % del vóxel es nódulo y el resto, pulmón.`;
+  const cuenta = document.getElementById('vp-cuenta'), veredicto = document.getElementById('vp-veredicto');
+  if (escenaVP === 'uno') {
+    // La cuenta del vóxel central, como en la diapositiva.
+    document.getElementById('vp-titulo-cuenta').textContent = 'Vóxel del centro del nódulo:';
+    const f = fraccionLesion(lesiones[0], 0, z0, z1), hu = f * HU_NOD + (1 - f) * HU_PULMON;
+    cuenta.innerHTML = f >= 1
+      ? `vóxel = 1 · (+40) = <b>+40 HU</b>`
+      : `vóxel = ${coma(f, 2)} · (+40) + ${coma(1 - f, 2)} · (−850) = <b>${conSigno(hu)}</b>`;
+    veredicto.innerHTML = f >= 1
+      ? '<span class="ok">El corte cabe dentro del nódulo: vale lo que vale de verdad.</span>'
+      : f === 0
+        ? '<span class="bad">El corte no toca el nódulo: no existe en esta imagen.</span>'
+        : f < 0.35
+          ? `<span class="bad">Solo el ${Math.round(f * 100)} % del vóxel es nódulo: parece pulmón un poco más denso. Se disfraza.</span>`
+          : `Mezcla: el ${Math.round(f * 100)} % del vóxel es nódulo y el resto, pulmón.`;
+    return;
+  }
+  // Varias lesiones: cuánto de cada una cae en el vóxel de su centro.
+  document.getElementById('vp-titulo-cuenta').textContent = 'Vóxel del centro de cada lesión (todas valen +40 HU):';
+  const fr = lesiones.map(l => fraccionLesion(l, 0, z0, z1));
+  cuenta.innerHTML = lesiones.map((l, k) => `${l.n}: ${fr[k] > 0 ? `${Math.round(fr[k] * 100)} % lesión → <b>${conSigno(fr[k] * HU_NOD + (1 - fr[k]) * HU_PULMON)}</b>` : 'fuera del corte'}`).join('<br>');
+  const vistas = lesiones.filter((l, k) => fr[k] > 0).map(l => l.n);
+  veredicto.innerHTML = fr[0] > 0 && fr[1] > 0
+    ? '<span class="bad">A y B están a 5 mm de altura una de otra, pero en este corte se pintan una encima de la otra: parecen <b>una sola lesión</b>, más grande y de forma rara.</span> Un corte grueso se parece a una radiografía: todo lo que hay en su grosor acaba en la misma imagen.'
+    : vistas.length === 0
+      ? 'El corte no toca ninguna lesión.'
+      : `<span class="ok">En este corte solo aparece ${vistas.join(' y ')}: con un corte fino las lesiones no se mezclan.</span>`;
 }
+
+const vpAxial = document.getElementById('vp-axial'), vpHu = document.getElementById('vp-hu');
+vpAxial.addEventListener('mousemove', ev => {
+  const p = pixelDeEvento(vpAxial, ev);
+  if (p.x < 0 || p.y < 0 || p.x >= N_AX || p.y >= N_AX) return;
+  vpHu.textContent = `Este vóxel: ${conSigno(huVP[p.y * N_AX + p.x])}`;
+});
 
 /* =====================================================================
    5. Ecografía: impedancia y Doppler
