@@ -17,6 +17,11 @@ tema01/             Tema 1: ventanas TC, bits, PET (animación), pulso-eco (anim
                     (lab.js = pestañas estáticas; pet.js y ecografia.js = animaciones;
                     fourier.js = sonido/espectrograma y FFT 2D; calidad.js =
                     «rompe el escáner»; dicom.js = juego de anonimización)
+tema02/             Tema 2: curva de transferencia (lineal, gamma, log, ecualización),
+                    convolución paso a paso, ruido y filtros (media, gaussiano,
+                    mediana, difusión anisotrópica), zoom y mejora; problemas tipo
+                    examen de gamma, ecualización y kernels 3 × 3
+                    (fantoma.js = RM sintética común; un .js por pestaña)
 ```
 
 Para añadir un tema: copiar `tema01/` como `temaXX/`, cambiar las pestañas y

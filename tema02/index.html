@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tema 2 — Laboratorio de imagen</title>
+<meta name="description" content="Simulaciones interactivas del Tema 2: curva de transferencia (gamma, ecualización), convolución paso a paso, ruido y filtros, interpolación.">
+<link rel="icon" href="../assets/icono.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Laboratorio de imagen">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="Laboratorio de imagen · Tema 2">
+<meta property="og:description" content="Gamma e histograma en directo, convolución paso a paso con problemas tipo examen, ruido y filtros, «zoom y mejora».">
+<meta property="og:url" content="https://miquelobrador.github.io/laboratorio-imagen/tema02/">
+<meta property="og:image" content="https://miquelobrador.github.io/laboratorio-imagen/assets/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Laboratorio de imagen: simulaciones de procesado de imagen">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/estilo.css?v=7">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1><a href="../">Laboratorio de imagen</a> · Tema 2</h1>
+    <span class="sub">Optimización de la imagen</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="wrap">
+    <a href="#intensidad">1 · Curva de transferencia</a>
+    <a href="#convolucion">2 · Convolución paso a paso</a>
+    <a href="#ruido">3 · Ruido y filtros</a>
+    <a href="#zoom">4 · Zoom y mejora</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ 1. CURVA DE TRANSFERENCIA ============ -->
+<section class="lab" id="intensidad">
+  <h2>Transformaciones de intensidad: g = T{f}</h2>
+  <p class="lead">Cada píxel se transforma con la misma curva, sin mirar a sus vecinos. La imagen es una RM sintética con poco contraste: mira cómo se mueve el histograma al cambiar la curva.</p>
+  <div class="grid">
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="muted">Original <i>f</i></div><canvas class="img" id="in-orig" aria-label="Imagen original"></canvas></div>
+        <div><div class="muted">Transformada <i>g</i></div><canvas class="img" id="in-res" aria-label="Imagen transformada"></canvas></div>
+      </div>
+      <canvas class="plot" id="in-hist" width="560" height="170" aria-label="Histogramas antes y después"></canvas>
+      <div class="muted">Histograma: <span style="color:#8a949c">■</span> original · <span style="color:#eb811b">■</span> transformada</div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="radios" role="radiogroup">
+          <label><input type="radio" name="in-modo" value="lineal" checked> Lineal (f<sub>1</sub>, f<sub>2</sub>)</label>
+          <label><input type="radio" name="in-modo" value="gamma"> Gamma</label>
+          <label><input type="radio" name="in-modo" value="log"> Logarítmica</label>
+          <label><input type="radio" name="in-modo" value="ecu"> Ecualizar</label>
+        </div>
+        <div class="ctrl" id="in-c-f1"><label for="in-f1">f<sub>1</sub> (umbral inferior) <output for="in-f1"></output></label>
+          <input type="range" id="in-f1" min="0" max="1" step="0.01" value="0"></div>
+        <div class="ctrl" id="in-c-f2"><label for="in-f2">f<sub>2</sub> (umbral superior) <output for="in-f2"></output></label>
+          <input type="range" id="in-f2" min="0" max="1" step="0.01" value="1"></div>
+        <div class="ctrl" id="in-c-g"><label for="in-g">γ <output for="in-g"></output></label>
+          <input type="range" id="in-g" min="-1.6" max="1.6" step="0.02" value="0"></div>
+        <canvas class="plot" id="in-curva" width="300" height="300" style="max-width:260px;margin:auto" aria-label="Curva de transferencia"></canvas>
+        <p class="readout" id="in-info" style="color:var(--text)"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> (1) Con «Lineal», elige f<sub>1</sub> y f<sub>2</sub> para que se distinga bien la sustancia gris de la blanca (es la ventana WL/WW del Tema 1). (2) ¿Qué γ aclara la imagen: mayor o menor que 1? (3) Pulsa «Ecualizar»: ¿qué forma tiene el histograma?
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin-top:0">Problema tipo examen</h3>
+    <div id="pi-enunciado"></div>
+    <div class="btns" style="align-items:center">
+      <label>Píxel central = <input type="number" id="pi-r" step="any"></label>
+      <button class="primary" id="pi-comprobar">Comprobar</button>
+      <button id="pi-nuevo">Nuevo problema</button>
+    </div>
+    <div id="pi-resultado"></div>
+  </div>
+</section>
+
+<!-- ============ 2. CONVOLUCIÓN ============ -->
+<section class="lab" id="convolucion">
+  <h2>Convolución paso a paso</h2>
+  <p class="lead">Una ventana de 3 × 3 recorre la imagen. En cada posición se multiplica casilla a casilla por el kernel y se suma (en el examen, «tal cual», sin girar el kernel). Haz clic en cualquier casilla del resultado para ver su cuenta.</p>
+  <div class="grid">
+    <div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div><div class="muted">Imagen <i>f</i></div><table class="rejilla" id="cv-ent"></table></div>
+        <div><div class="muted">Resultado <i>g</i></div><table class="rejilla" id="cv-sal"></table></div>
+      </div>
+      <div class="card" style="margin-top:8px">
+        <div class="muted">La cuenta del píxel marcado:</div>
+        <div id="cv-cuenta" style="font-variant-numeric:tabular-nums;overflow-x:auto"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="cv-kernel">Kernel</label>
+          <select id="cv-kernel"></select></div>
+        <div id="cv-kmat"></div>
+        <div class="ctrl"><label for="cv-img">Imagen</label>
+          <select id="cv-img">
+            <option value="punto">Punto brillante</option>
+            <option value="borde">Borde vertical</option>
+            <option value="sal">Región con un píxel de «sal»</option>
+            <option value="rampa">Rampa suave</option>
+          </select></div>
+        <div class="btns">
+          <button class="primary" id="cv-play">▶ Animar</button>
+          <button id="cv-paso">Paso</button>
+          <button id="cv-reset">Reiniciar</button>
+        </div>
+        <p class="muted" id="cv-nota"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> (1) Con el <b>punto brillante</b>, compara la media con la mediana: ¿qué hace cada una con el punto? (2) Con el <b>borde vertical</b>, prueba Prewitt: ¿dónde sale distinto de cero y con qué signo? (3) Con la <b>rampa</b>, ¿qué da el Laplaciano? ¿Por qué?
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin-top:0">Problema tipo examen</h3>
+    <div id="pc-enunciado"></div>
+    <div class="btns" style="align-items:center">
+      <label>Píxel central = <input type="number" id="pc-r" step="any"></label>
+      <button class="primary" id="pc-comprobar">Comprobar</button>
+      <button id="pc-nuevo">Nuevo problema</button>
+    </div>
+    <div id="pc-resultado"></div>
+  </div>
+</section>
+
+<!-- ============ 3. RUIDO Y FILTROS ============ -->
+<section class="lab" id="ruido">
+  <h2>Ruido y filtros: limpiar sin borrar</h2>
+  <p class="lead">RM sintética con una <b>lesión pequeña</b> de 3 × 3 píxeles (marcada con un círculo). Añade ruido, elige un filtro y mira dos cosas a la vez: cuánto baja el ruido (σ, medido en una zona homogénea) y si la lesión sobrevive.</p>
+  <div class="grid">
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="muted">Con ruido</div><canvas class="img" id="rf-ruidosa" aria-label="Imagen con ruido"></canvas></div>
+        <div><div class="muted">Filtrada</div><canvas class="img" id="rf-filtrada" aria-label="Imagen filtrada"></canvas></div>
+      </div>
+      <label class="muted" style="display:block;margin-top:6px"><input type="checkbox" id="rf-marca" checked> Marcar la lesión y la zona donde se mide σ</label>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="rf-tipo">Tipo de ruido</label>
+          <select id="rf-tipo">
+            <option value="sp">Sal y pimienta (impulsivo)</option>
+            <option value="gauss">Gaussiano (aditivo)</option>
+            <option value="poisson">Poisson (contar fotones, RX)</option>
+            <option value="speckle">Speckle (multiplicativo, eco)</option>
+          </select></div>
+        <div class="ctrl"><label for="rf-nivel">Cantidad de ruido <output for="rf-nivel"></output></label>
+          <input type="range" id="rf-nivel" min="0" max="1" step="0.05" value="0.5"></div>
+        <div class="ctrl"><label for="rf-filtro">Filtro</label>
+          <select id="rf-filtro">
+            <option value="no">Ninguno</option>
+            <option value="media">Media</option>
+            <option value="gauss">Gaussiano</option>
+            <option value="mediana" selected>Mediana</option>
+            <option value="difusion">Difusión anisotrópica</option>
+          </select></div>
+        <div class="ctrl" id="rf-c-n"><label for="rf-n">Tamaño de la ventana <output for="rf-n"></output></label>
+          <input type="range" id="rf-n" min="3" max="9" step="2" value="3"></div>
+        <div class="ctrl" id="rf-c-it" hidden><label for="rf-it">Iteraciones <output for="rf-it"></output></label>
+          <input type="range" id="rf-it" min="1" max="40" step="1" value="10"></div>
+        <div class="ctrl" id="rf-c-k" hidden><label for="rf-k">K (qué gradiente se considera borde) <output for="rf-k"></output></label>
+          <input type="range" id="rf-k" min="0.02" max="0.5" step="0.01" value="0.1"></div>
+        <table class="stats">
+          <tr><th></th><th>Con ruido</th><th>Filtrada</th></tr>
+          <tbody id="rf-tabla"></tbody>
+        </table>
+        <p id="rf-veredicto" style="margin:8px 0 0"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> (1) Con <b>sal y pimienta</b>, compara media y mediana de 3 × 3. (2) Sube la mediana a 5 × 5: ¿qué le pasa a la lesión? (3) Con ruido <b>gaussiano</b> y media 3 × 3, ¿cuánto baja σ? (Pista: ley de √N, Tema 1.) (4) Prueba la difusión anisotrópica con muchas iteraciones: ¿se conservan los bordes?
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. ZOOM Y MEJORA ============ -->
+<section class="lab" id="zoom">
+  <h2>«Zoom y mejora»: ¿se puede inventar resolución?</h2>
+  <p class="lead">Una cámara de pocos píxeles graba una matrícula. Ampliamos la imagen con dos interpolaciones. ¿Alguna recupera lo que la cámara no grabó?</p>
+  <div class="grid">
+    <div>
+      <div class="muted">Vecino más próximo (cada píxel se copia en bloque)</div>
+      <canvas class="img" id="zm-vecino" aria-label="Ampliación por vecino más próximo"></canvas>
+      <div class="muted" style="margin-top:8px">Bilineal (promedio de los 4 vecinos)</div>
+      <canvas class="img" id="zm-bilineal" aria-label="Ampliación bilineal"></canvas>
+      <div class="muted" style="margin-top:8px">La matrícula real</div>
+      <canvas class="img oculto" id="zm-real" aria-label="Matrícula real"></canvas>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="zm-px">Píxeles de la cámara (ancho) <output for="zm-px"></output></label>
+          <input type="range" id="zm-px" min="0" max="9" step="1" value="3"></div>
+        <div class="btns">
+          <button class="primary" id="zm-ver">Ver la matrícula real</button>
+          <button id="zm-otra">Otra matrícula</button>
+        </div>
+        <p class="readout" id="zm-info" style="color:var(--text)"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> Antes de ver la real, escribe en el chat qué pone. ¿A partir de cuántos píxeles se lee? La bilineal queda más bonita, pero ¿añade información? (Temario 2.2.2: «no se pueden añadir artificialmente detalles que no se han adquirido».)
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Teledetección y Procesado de Imágenes · Grado en Física, UNIR · Curso 2026-27.
+    Todas las imágenes son sintéticas, generadas en tu navegador; no son datos de pacientes.
+  </div>
+</footer>
+
+<script src="../assets/comun.js?v=7"></script>
+<script src="fantoma.js?v=1"></script>
+<script src="intensidad.js?v=1"></script>
+<script src="convolucion.js?v=1"></script>
+<script src="ruido.js?v=1"></script>
+<script src="zoom.js?v=1"></script>
+</body>
+</html>
