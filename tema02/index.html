@@ -18,7 +18,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Laboratorio de imagen: simulaciones de procesado de imagen">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../assets/estilo.css?v=7">
+<link rel="stylesheet" href="../assets/estilo.css?v=8">
 </head>
 <body>
 <header class="top">
@@ -90,7 +90,7 @@
 <!-- ============ 2. CONVOLUCIÓN ============ -->
 <section class="lab" id="convolucion">
   <h2>Convolución paso a paso</h2>
-  <p class="lead">Una ventana de 3 × 3 recorre la imagen. En cada posición se multiplica casilla a casilla por el kernel y se suma (en el examen, «tal cual», sin girar el kernel). Haz clic en cualquier casilla del resultado para ver su cuenta.</p>
+  <p class="lead">Una ventana de 3 × 3 recorre la imagen. En cada posición se multiplica casilla a casilla por el kernel y se suma (en el examen, «tal cual», sin girar el kernel). Para que la ventana pueda colocarse también en los bordes, la imagen se rodea de un marco de <b>relleno</b> (<i>padding</i>, en gris y con borde discontinuo): así el resultado tiene el mismo tamaño que la imagen. Haz clic en cualquier casilla del resultado para ver su cuenta.</p>
   <div class="grid">
     <div>
       <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
@@ -114,6 +114,11 @@
             <option value="sal">Región con un píxel de «sal»</option>
             <option value="rampa">Rampa suave</option>
           </select></div>
+        <div class="ctrl"><label for="cv-pad">Relleno (padding)</label>
+          <select id="cv-pad">
+            <option value="ceros">Ceros</option>
+            <option value="replicar">Replicar el borde</option>
+          </select></div>
         <div class="btns">
           <button class="primary" id="cv-play">▶ Animar</button>
           <button id="cv-paso">Paso</button>
@@ -122,7 +127,7 @@
         <p class="muted" id="cv-nota"></p>
       </div>
       <div class="reto">
-        <strong>Reto.</strong> (1) Con el <b>punto brillante</b>, compara la media con la mediana: ¿qué hace cada una con el punto? (2) Con el <b>borde vertical</b>, prueba Prewitt: ¿dónde sale distinto de cero y con qué signo? (3) Con la <b>rampa</b>, ¿qué da el Laplaciano? ¿Por qué?
+        <strong>Reto.</strong> (1) Con el <b>punto brillante</b>, compara la media con la mediana: ¿qué hace cada una con el punto? (2) Con el <b>borde vertical</b>, prueba Prewitt: ¿dónde sale distinto de cero y con qué signo? (3) Con la <b>rampa</b>, ¿qué da el Laplaciano? ¿Por qué? (4) Con la <b>media</b> y relleno de <b>ceros</b>, ¿qué pasa en el borde del resultado? ¿Y si replicas el borde?
       </div>
     </div>
   </div>
@@ -231,7 +236,7 @@
 <script src="../assets/comun.js?v=7"></script>
 <script src="fantoma.js?v=1"></script>
 <script src="intensidad.js?v=1"></script>
-<script src="convolucion.js?v=1"></script>
+<script src="convolucion.js?v=2"></script>
 <script src="ruido.js?v=1"></script>
 <script src="zoom.js?v=1"></script>
 </body>

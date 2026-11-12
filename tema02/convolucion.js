@@ -23,11 +23,20 @@
   for (const [id, k] of Object.entries(KERNELS)) selK.add(new Option(k.nombre, id));
   selK.value = 'media';
 
-  let f = [], g = [], actual = 12, timer = null;   // actual: índice 0..24 de las posiciones interiores
+  const selP = document.getElementById('cv-pad');
+  let f = [], g = [], actual = 24, timer = null;   // actual: índice 0..48 (todas las posiciones)
+  const TOTAL = N * N;
 
-  function aplicar(K, M, i, j) {   // M: matriz plana N × N; devuelve { valor, terminos }
+  // Valor de M en (i, j); fuera de la imagen, el relleno (padding): ceros o el borde replicado.
+  function val(M, i, j, modo) {
+    if (i >= 0 && i < N && j >= 0 && j < N) return M[i * N + j];
+    if (modo === 'replicar') return M[Math.min(N - 1, Math.max(0, i)) * N + Math.min(N - 1, Math.max(0, j))];
+    return 0;
+  }
+
+  function aplicar(K, M, i, j, modo = selP.value) {   // M: matriz plana N × N
     const ventana = [];
-    for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) ventana.push(M[(i + di) * N + j + dj]);
+    for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) ventana.push(val(M, i + di, j + dj, modo));
     if (K.mediana) {
       const orden = [...ventana].sort((a, b) => a - b);
       return { valor: orden[4], ventana, orden };
@@ -45,8 +54,8 @@
   function recalcular() {
     const K = KERNELS[selK.value], img = IMAGENES[selI.value];
     f = []; for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) f.push(img(i, j));
-    g = new Array(N * N).fill(null);
-    for (let i = 1; i < N - 1; i++) for (let j = 1; j < N - 1; j++) g[i * N + j] = aplicar(K, f, i, j).valor;
+    g = [];
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) g.push(aplicar(K, f, i, j).valor);
     document.getElementById('cv-nota').textContent = K.nota;
     const km = K.mediana ? '<p class="muted">Ordenar y tomar el 5.º de 9.</p>'
       : `<div class="muted">${K.div > 1 ? `1/${K.div} ×` : ''}</div><table class="rejilla">${[0, 1, 2].map(r => `<tr>${[0, 1, 2].map(c => `<td>${K.k[r * 3 + c]}</td>`).join('')}</tr>`).join('')}</table>`;
@@ -55,16 +64,16 @@
   }
 
   function pintar() {
-    const K = KERNELS[selK.value], ci = 1 + Math.floor(actual / 5), cj = 1 + (actual % 5);
+    const K = KERNELS[selK.value], ci = Math.floor(actual / N), cj = actual % N, modo = selP.value;
     const signo = !K.mediana && K.k.some(x => x < 0) && K.k.reduce((a, b) => a + b, 0) === 0;
-    document.getElementById('cv-ent').innerHTML = [...Array(N).keys()].map(i => `<tr>${[...Array(N).keys()].map(j => {
+    const idx = [...Array(N + 2).keys()].map(q => q - 1);   // -1 .. N: la imagen con su marco de relleno
+    document.getElementById('cv-ent').innerHTML = idx.map(i => `<tr>${idx.map(j => {
       const en = Math.abs(i - ci) <= 1 && Math.abs(j - cj) <= 1;
-      return `<td class="${en ? 'ventana' : ''}${i === ci && j === cj ? ' centro' : ''}" style="${gris(f[i * N + j])}">${f[i * N + j]}</td>`;
+      const fuera = i < 0 || i >= N || j < 0 || j >= N, v = val(f, i, j, modo);
+      return `<td class="${fuera ? 'relleno' : ''}${en ? ' ventana' : ''}${i === ci && j === cj ? ' centro' : ''}" style="${gris(v)}"${fuera ? ' title="Relleno (padding): no es parte de la imagen"' : ''}>${v}</td>`;
     }).join('')}</tr>`).join('');
     document.getElementById('cv-sal').innerHTML = [...Array(N).keys()].map(i => `<tr>${[...Array(N).keys()].map(j => {
-      const v = g[i * N + j];
-      if (v === null) return '<td class="vacia" title="Borde: no tiene los 8 vecinos">·</td>';
-      const k = (i - 1) * 5 + (j - 1);
+      const v = g[i * N + j], k = i * N + j;
       return `<td data-k="${k}" class="${k === actual ? 'centro' : ''}" style="${gris(v, signo)}">${fmt(Math.round(v * 10) / 10)}</td>`;
     }).join('')}</tr>`).join('');
     const r = aplicar(K, f, ci, cj);
@@ -84,17 +93,18 @@
     if (td) { actual = +td.dataset.k; pintar(); }
   });
   const parar = () => { clearInterval(timer); timer = null; document.getElementById('cv-play').textContent = '▶ Animar'; };
-  document.getElementById('cv-paso').addEventListener('click', () => { parar(); actual = (actual + 1) % 25; pintar(); });
+  document.getElementById('cv-paso').addEventListener('click', () => { parar(); actual = (actual + 1) % TOTAL; pintar(); });
   document.getElementById('cv-reset').addEventListener('click', () => { parar(); actual = 0; pintar(); });
   document.getElementById('cv-play').addEventListener('click', () => {
     if (timer) return parar();
     document.getElementById('cv-play').textContent = '⏸ Pausa';
     actual = -1;
-    timer = setInterval(() => { actual++; if (actual >= 25) { actual = 24; parar(); } pintar(); }, 700);
+    timer = setInterval(() => { actual++; if (actual >= TOTAL) { actual = TOTAL - 1; parar(); } pintar(); }, 700);
   });
   window.addEventListener('pestana', ev => { if (ev.detail !== 'convolucion') parar(); });
   selK.addEventListener('change', recalcular);
   selI.addEventListener('change', recalcular);
+  selP.addEventListener('change', recalcular);
   recalcular();
 
   /* --- Problema tipo examen (arquetipos de los modelos de examen) --- */
@@ -117,7 +127,7 @@
     const K = KERNELS[tipo];
     const plano = []; for (let i = 0; i < N * N; i++) plano.push(0);
     for (let q = 0; q < 9; q++) plano[(2 + Math.floor(q / 3)) * N + 2 + (q % 3)] = M[q];
-    const r = aplicar(K, plano, 3, 3);
+    const r = aplicar(K, plano, 3, 3, 'ceros');
     const interp = {
       laplace: r.valor > 0 ? 'Positivo: el centro es más brillante que sus vecinos (punto o borde brillante). Si fuera homogéneo daría 0.' : 'Negativo: el centro es más oscuro que sus vecinos. Si fuera homogéneo daría 0.',
       prewitt: 'Positivo: la intensidad aumenta de izquierda a derecha (de oscuro a claro): hay un borde vertical.',
