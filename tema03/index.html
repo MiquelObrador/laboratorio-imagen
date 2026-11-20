@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tema 3 — Laboratorio de imagen</title>
+<meta name="description" content="Simulaciones interactivas del Tema 3: transformaciones geométricas con matrices homogéneas, registro de imágenes con ECM e información mutua, y fusión multimodal con paletas de color.">
+<link rel="icon" href="../assets/icono.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Laboratorio de imagen">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="Laboratorio de imagen · Tema 3">
+<meta property="og:description" content="Transformaciones geométricas paso a paso con problemas tipo examen, «alinea tú» con ECM e información mutua y fusión con paleta y transparencia.">
+<meta property="og:url" content="https://miquelobrador.github.io/laboratorio-imagen/tema03/">
+<meta property="og:image" content="https://miquelobrador.github.io/laboratorio-imagen/assets/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Laboratorio de imagen: simulaciones de procesado de imagen">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/estilo.css?v=8">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1><a href="../">Laboratorio de imagen</a> · Tema 3</h1>
+    <span class="sub">Registro y fusión de imágenes</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="wrap">
+    <a href="#transformaciones">1 · Transformaciones geométricas</a>
+    <a href="#registro">2 · Alinea tú (registro)</a>
+    <a href="#fusion">3 · Fusión</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ 1. TRANSFORMACIONES ============ -->
+<section class="lab" id="transformaciones">
+  <h2>Transformaciones geométricas con matrices: P′ = M · P</h2>
+  <p class="lead">El punto se escribe en coordenadas homogéneas como vector columna (x, y, 1). Encadena transformaciones y mira cómo se multiplican las matrices: la última que añades queda a la izquierda.</p>
+  <div class="grid">
+    <div>
+      <canvas class="plot" id="tf-plano" width="520" height="520" aria-label="Plano con la figura original y la transformada"></canvas>
+      <div class="muted"><span style="color:#8a949c">■</span> original · <span style="color:#eb811b">■</span> transformada · ● el vértice P</div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="radios" role="radiogroup">
+          <label><input type="radio" name="tf-tipo" value="T" checked> Traslación</label>
+          <label><input type="radio" name="tf-tipo" value="S"> Escalado</label>
+          <label><input type="radio" name="tf-tipo" value="C"> Cizalla</label>
+          <label><input type="radio" name="tf-tipo" value="R"> Rotación</label>
+        </div>
+        <div class="ctrl"><label for="tf-a"><span id="tf-a-nombre">t<sub>x</sub></span> <output for="tf-a"></output></label>
+          <input type="range" id="tf-a" min="-6" max="6" step="1" value="2"></div>
+        <div class="ctrl" id="tf-c-b"><label for="tf-b"><span id="tf-b-nombre">t<sub>y</sub></span> <output for="tf-b"></output></label>
+          <input type="range" id="tf-b" min="-6" max="6" step="1" value="1"></div>
+        <div class="btns">
+          <button class="primary" id="tf-anadir">Añadir a la cadena</button>
+          <button id="tf-borrar">Borrar la cadena</button>
+        </div>
+        <div id="tf-matrices" class="formula" style="overflow-x:auto"></div>
+        <p class="readout" id="tf-info" style="color:var(--text)"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> (1) Rota 90° y luego traslada (3, 0). Borra y hazlo al revés: ¿acaba P en el mismo sitio? (2) ¿Qué rotación deja la figura igual que un escalado con s<sub>x</sub> = s<sub>y</sub> = −1? (3) ¿Cuál de las cuatro transformaciones no conserva los ángulos de la figura?
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin-top:0">Problema tipo examen</h3>
+    <div id="tp-enunciado"></div>
+    <div class="btns">
+      <button class="primary" id="tp-solucion">Ver la solución</button>
+      <button id="tp-otro">Otro problema</button>
+    </div>
+    <div id="tp-sol" class="formula" style="display:none;overflow-x:auto"></div>
+  </div>
+</section>
+
+<!-- ============ 2. REGISTRO ============ -->
+<section class="lab" id="registro">
+  <h2>Alinea tú: registro rígido con ECM o información mutua</h2>
+  <p class="lead">La imagen móvil (magenta) está girada y desplazada respecto a la de referencia (verde). Muévela con los deslizadores hasta alinearla, o deja que lo haga el optimizador. Prueba con la misma modalidad y con modalidades distintas.</p>
+  <div class="grid">
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="muted">Superposición: <span style="color:#3fb950">referencia</span> + <span style="color:#d33fd3">móvil</span> (alineadas = gris)</div><canvas class="img" id="rg-fusion" aria-label="Superposición de las dos imágenes"></canvas></div>
+        <div><div class="muted">Histograma conjunto (referencia ↓, móvil →)</div><canvas class="img" id="rg-hist" aria-label="Histograma conjunto"></canvas></div>
+      </div>
+      <canvas class="plot" id="rg-curva" width="560" height="150" aria-label="Evolución de la métrica"></canvas>
+      <div class="muted">Métrica en cada paso del optimizador</div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="radios" role="radiogroup">
+          <label><input type="radio" name="rg-mod" value="t1" checked> Misma modalidad (T1 + T1)</label>
+          <label><input type="radio" name="rg-mod" value="t2"> Distinta (T1 + T2)</label>
+        </div>
+        <div class="ctrl"><label for="rg-th">Giro θ <output for="rg-th"></output></label>
+          <input type="range" id="rg-th" min="-30" max="30" step="0.5" value="0"></div>
+        <div class="ctrl"><label for="rg-tx">t<sub>x</sub> (píxeles) <output for="rg-tx"></output></label>
+          <input type="range" id="rg-tx" min="-20" max="20" step="0.5" value="0"></div>
+        <div class="ctrl"><label for="rg-ty">t<sub>y</sub> (píxeles) <output for="rg-ty"></output></label>
+          <input type="range" id="rg-ty" min="-20" max="20" step="0.5" value="0"></div>
+        <div class="radios" role="radiogroup" style="margin-top:6px">
+          <span class="muted">El optimizador usa:</span>
+          <label><input type="radio" name="rg-met" value="ecm" checked> ECM (minimizar)</label>
+          <label><input type="radio" name="rg-met" value="im"> IM (maximizar)</label>
+        </div>
+        <div class="btns">
+          <button class="primary" id="rg-opt">Optimizar</button>
+          <button id="rg-comprobar">¿Está alineada?</button>
+          <button id="rg-nuevo">Nuevo caso</button>
+        </div>
+        <p class="readout" id="rg-info" style="color:var(--text)"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> (1) Con T1 + T1, alinea a mano: ¿qué le pasa al ECM y a la IM cuando aciertas? ¿Y al histograma conjunto? (2) Cambia a T1 + T2 y optimiza con el ECM: ¿alinea bien? (3) Repite con la IM. ¿Por qué cambia? (Temario 3.3: métricas.)
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. FUSIÓN ============ -->
+<section class="lab" id="fusion">
+  <h2>Fusión PET-RM: anatómica en grises, funcional en color</h2>
+  <p class="lead">Una RM (anatomía, mucho detalle) y una PET (metabolismo, poca resolución) del mismo cerebro sintético. Hay un tumor que consume mucha glucosa. Juega con la paleta, la transparencia y el umbral.</p>
+  <div class="grid">
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div><div class="muted">RM (anatómica)</div><canvas class="img" id="fu-rm" aria-label="RM"></canvas></div>
+        <div><div class="muted">PET (funcional)</div><canvas class="img" id="fu-pet" aria-label="PET"></canvas></div>
+        <div><div class="muted">Fusión</div><canvas class="img" id="fu-fus" aria-label="Fusión"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="radios" role="radiogroup">
+          <label><input type="radio" name="fu-pal" value="hot" checked> Hot</label>
+          <label><input type="radio" name="fu-pal" value="jet"> Arcoíris</label>
+          <label><input type="radio" name="fu-pal" value="gris"> Grises</label>
+        </div>
+        <div class="ctrl"><label for="fu-alfa">Transparencia α (peso de la PET) <output for="fu-alfa"></output></label>
+          <input type="range" id="fu-alfa" min="0" max="1" step="0.05" value="0.5"></div>
+        <div class="ctrl"><label for="fu-umbral">Umbral: no colorear la PET por debajo de <output for="fu-umbral"></output></label>
+          <input type="range" id="fu-umbral" min="0" max="0.9" step="0.05" value="0.4"></div>
+        <label style="display:block;margin:8px 0"><input type="checkbox" id="fu-desal"> PET sin registrar (desplazada y girada)</label>
+        <p class="readout" id="fu-info" style="color:var(--text)"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> (1) Con la paleta «Grises», ¿distingues la PET de la RM en la fusión? ¿Por qué se usa color? (2) ¿Qué pasa con α = 0 y con α = 1? (3) Marca «PET sin registrar»: ¿en qué estructura parece estar ahora el tumor?
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Teledetección y Procesado de Imágenes · Grado en Física, UNIR · Curso 2026-27.
+    Todas las imágenes son sintéticas, generadas en tu navegador; no son datos de pacientes.
+  </div>
+</footer>
+
+<script src="../assets/comun.js?v=7"></script>
+<script src="../tema02/fantoma.js?v=1"></script>
+<script src="geometria.js?v=1"></script>
+<script src="transformaciones.js?v=2"></script>
+<script src="registro.js?v=2"></script>
+<script src="fusion.js?v=2"></script>
+</body>
+</html>
