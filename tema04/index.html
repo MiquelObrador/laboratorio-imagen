@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tema 4 — Laboratorio de imagen</title>
+<meta name="description" content="Simulaciones interactivas del Tema 4: umbral y método de Otsu con iluminación no uniforme, crecimiento de regiones paso a paso y k-medias, con problemas tipo examen.">
+<link rel="icon" href="../assets/icono.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Laboratorio de imagen">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="Laboratorio de imagen · Tema 4">
+<meta property="og:description" content="Gánale a Otsu, crecimiento de regiones paso a paso con 4 u 8 vecinos y k-medias animado, con problemas tipo examen ilimitados.">
+<meta property="og:url" content="https://miquelobrador.github.io/laboratorio-imagen/tema04/">
+<meta property="og:image" content="https://miquelobrador.github.io/laboratorio-imagen/assets/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Laboratorio de imagen: simulaciones de procesado de imagen">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/estilo.css?v=9">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1><a href="../">Laboratorio de imagen</a> · Tema 4</h1>
+    <span class="sub">Técnicas de segmentación</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="wrap">
+    <a href="#umbral">1 · Umbral y Otsu</a>
+    <a href="#crecimiento">2 · Crecimiento de regiones</a>
+    <a href="#kmedias">3 · K-medias</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============ 1. UMBRAL Y OTSU ============ -->
+<section class="lab" id="umbral">
+  <h2>Umbral y método de Otsu: ¿le ganas?</h2>
+  <p class="lead">Todo lo que supera el umbral <i>t</i> pasa a ser 1 (blanco) en la máscara. Arrastra el umbral sobre el histograma. La curva roja es la <b>varianza entre clases</b> σ<sub>b</sub><sup>2</sup>(<i>t</i>): Otsu elige el <i>t</i> donde es máxima.</p>
+  <div class="grid">
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="muted">Imagen</div><canvas class="img" id="um-img" aria-label="Imagen"></canvas></div>
+        <div><div class="muted">Máscara</div><canvas class="img" id="um-mask" aria-label="Máscara"></canvas></div>
+      </div>
+      <canvas class="plot" id="um-hist" width="640" height="220" style="margin-top:8px;cursor:ew-resize" aria-label="Histograma con el umbral y la varianza entre clases"></canvas>
+      <div class="muted">Haz clic o arrastra sobre el histograma para mover el umbral.</div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="radios" role="radiogroup">
+          <label><input type="radio" name="um-imagen" value="celulas" checked> Células</label>
+          <label><input type="radio" name="um-imagen" value="rm"> RM sintética</label>
+        </div>
+        <div class="ctrl"><label for="um-t">Umbral <i>t</i> <output for="um-t"></output></label>
+          <input type="range" id="um-t" min="0" max="255" step="1" value="150"></div>
+        <label style="display:block;margin:6px 0"><input type="checkbox" id="um-luz"> Iluminación no uniforme (más luz a la derecha)</label>
+        <label style="display:block;margin:6px 0"><input type="checkbox" id="um-adapt"> Umbral adaptativo (uno por vecindario)</label>
+        <div class="ctrl" id="um-c-ventana"><label for="um-ventana">Vecindario (píxeles) <output for="um-ventana"></output></label>
+          <input type="range" id="um-ventana" min="5" max="101" step="2" value="31"></div>
+        <div class="btns">
+          <button class="primary" id="um-otsu">Poner el umbral de Otsu</button>
+        </div>
+        <p class="readout" id="um-info" style="color:var(--text)"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> (1) Con las células, pon el umbral a ojo y mira tu puntuación: ¿llegas al 100 %? (2) Marca «Iluminación no uniforme»: ¿cuántas células encuentra ahora el mejor umbral global? (3) Activa el umbral adaptativo: ¿qué pasa con un vecindario muy pequeño? (4) Con la RM, ¿qué separa Otsu? ¿Por qué no puede separar los cinco tejidos?
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. CRECIMIENTO DE REGIONES ============ -->
+<section class="lab" id="crecimiento">
+  <h2>Crecimiento de regiones paso a paso</h2>
+  <p class="lead">Desde la <b>semilla</b>, la región se extiende a los vecinos cuya intensidad está dentro de la <b>tolerancia respecto a la semilla</b>: |<i>I</i> − <i>I</i><sub>s</sub>| ≤ <i>t</i>. Haz clic en una casilla para poner ahí la semilla.</p>
+  <div class="grid">
+    <div>
+      <table class="rejilla grande" id="cr-tabla" aria-label="Imagen de números"></table>
+      <div class="muted" style="margin-top:6px">
+        <span class="leyenda semilla"></span> semilla ·
+        <span class="leyenda dentro"></span> dentro ·
+        <span class="leyenda fuera"></span> comprobado y rechazado ·
+        <span class="leyenda trampa"></span> en la tolerancia pero sin conexión
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="cr-tol">Tolerancia ± <output for="cr-tol"></output></label>
+          <input type="range" id="cr-tol" min="0" max="12" step="1" value="3"></div>
+        <div class="radios" role="radiogroup">
+          <label><input type="radio" name="cr-vec" value="4" checked> 4 vecinos</label>
+          <label><input type="radio" name="cr-vec" value="8"> 8 vecinos</label>
+        </div>
+        <div class="btns">
+          <button class="primary" id="cr-play">▶ Animar</button>
+          <button id="cr-paso">Paso</button>
+          <button id="cr-reset">Reiniciar</button>
+          <button id="cr-otra">Otra imagen</button>
+        </div>
+        <p class="readout" id="cr-info" style="color:var(--text)"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> (1) Pon la semilla y anima: ¿hay casillas amarillas? ¿Por qué no entran si cumplen la tolerancia? (2) Cambia a 8 vecinos: ¿qué casillas se añaden? (3) Sube la tolerancia poco a poco: ¿en qué valor se «escapa» la región?
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin-top:0">Problema tipo examen: pinta tú la máscara</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+      <table class="rejilla grande" id="cp-tabla" aria-label="Matriz del problema"></table>
+      <div style="flex:1;min-width:260px">
+        <div id="cp-enunciado"></div>
+        <div class="btns">
+          <button class="primary" id="cp-comprobar">Comprobar</button>
+          <button id="cp-otro">Otro problema</button>
+        </div>
+        <div id="cp-resultado"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. K-MEDIAS ============ -->
+<section class="lab" id="kmedias">
+  <h2>K-medias paso a paso</h2>
+  <p class="lead">Cada píxel va al <b>centroide más cercano</b> y luego cada centroide pasa a ser la <b>media</b> de su grupo. Se repite hasta que nadie cambia de grupo. Arrastra los centroides para cambiar el inicio.</p>
+  <div class="grid">
+    <div>
+      <canvas class="plot" id="km-recta" width="640" height="150" style="cursor:grab" aria-label="Recta con las intensidades y los centroides"></canvas>
+      <div id="km-tabla" style="overflow-x:auto"></div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ctrl"><label for="km-datos">Intensidades de los píxeles</label>
+          <input type="text" id="km-datos" value="6, 9, 25, 8, 28, 31" style="width:100%;font:inherit;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)"></div>
+        <div class="ctrl"><label for="km-sem">Centroides iniciales</label>
+          <input type="text" id="km-sem" value="10, 20" style="width:100%;font:inherit;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)"></div>
+        <div class="btns">
+          <button class="primary" id="km-paso">1 · Asignar</button>
+          <button id="km-reset">Empezar de nuevo</button>
+        </div>
+        <p class="readout" id="km-info" style="color:var(--text)"></p>
+      </div>
+      <div class="reto">
+        <strong>Reto.</strong> (1) ¿Cuántas iteraciones hacen falta para converger? (2) Arrastra los dos centroides a la derecha del todo (por ejemplo, 29 y 31): ¿llega al mismo resultado? (3) Escribe datos con un empate (un punto a la misma distancia de los dos centroides): ¿qué decide el algoritmo?
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin-top:0">K-medias sobre una imagen</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:2;min-width:300px">
+        <div><div class="muted">RM sintética (con ruido)</div><canvas class="img" id="ki-img" aria-label="RM sintética"></canvas></div>
+        <div><div class="muted">Grupos</div><canvas class="img" id="ki-lab" aria-label="Imagen de grupos"></canvas></div>
+      </div>
+      <div style="flex:1;min-width:240px">
+        <div class="ctrl"><label for="ki-k">Número de grupos <i>k</i> <output for="ki-k"></output></label>
+          <input type="range" id="ki-k" min="2" max="6" step="1" value="3"></div>
+        <div class="btns"><button id="ki-azar">Otro inicio al azar</button></div>
+        <canvas class="plot" id="ki-hist" width="400" height="160" aria-label="Histograma con los centroides"></canvas>
+        <p class="readout" id="ki-info" style="color:var(--text)"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin-top:0">Problema tipo examen</h3>
+    <div id="kp-enunciado"></div>
+    <div class="ctrl" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <label>C<sub>1</sub>′ = <input type="number" id="kp-c1" step="0.01"></label>
+      <label>C<sub>2</sub>′ = <input type="number" id="kp-c2" step="0.01"></label>
+    </div>
+    <div class="btns">
+      <button class="primary" id="kp-comprobar">Comprobar</button>
+      <button id="kp-otro">Otro problema</button>
+    </div>
+    <div id="kp-resultado"></div>
+  </div>
+</section>
+</main>
+<footer>
+  <div class="wrap">
+    Teledetección y Procesado de Imágenes · Grado en Física, UNIR · Curso 2026-27.
+    Todas las imágenes son sintéticas, generadas en tu navegador; no son datos de pacientes.
+  </div>
+</footer>
+<script src="../assets/comun.js?v=7"></script>
+<script src="../tema02/fantoma.js?v=1"></script>
+<script src="umbral.js?v=1"></script>
+<script src="crecimiento.js?v=1"></script>
+<script src="kmedias.js?v=1"></script>
+</body>
+</html>

@@ -22,6 +22,12 @@ tema02/             Tema 2: curva de transferencia (lineal, gamma, log, ecualiza
                     mediana, difusión anisotrópica), zoom y mejora; problemas tipo
                     examen de gamma, ecualización y kernels 3 × 3
                     (fantoma.js = RM sintética común; un .js por pestaña)
+tema03/             Tema 3: transformaciones geométricas con matrices homogéneas,
+                    «alinea tú» (registro con ECM o información mutua) y fusión PET-RM
+tema04/             Tema 4: umbral y Otsu («gánale a Otsu», iluminación no uniforme,
+                    umbral adaptativo), crecimiento de regiones paso a paso (4/8
+                    vecinos) y k-medias animado; problemas tipo examen de crecimiento
+                    de regiones (pintar la máscara) y de k-medias 1D
 ```
 
 Para añadir un tema: copiar `tema01/` como `temaXX/`, cambiar las pestañas y
